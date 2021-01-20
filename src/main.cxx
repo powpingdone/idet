@@ -14,5 +14,5 @@ fWindow::fWindow() {
 int main(int argc, char * argv[]) {
     printf("Hello world!\n");
     auto app = Gtk::Application::create("org.gtkmm.examples.base");
-    
+    return app->make_window_and_run<fWindow>(argc, argv);   
 }
