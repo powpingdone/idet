@@ -1,11 +1,8 @@
 idet_sources = [
-  'main.c'
+  'main.cxx'
 ]
-
-depend = [dependency('gtk4')]
 
 executable('idet',
   idet_sources,
-  install : true,
-  dependencies : depend
+  install : true
 )
