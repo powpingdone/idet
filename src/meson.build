@@ -1,5 +1,7 @@
 idet_sources = [
-  'main.cxx'
+  'main.cxx',
+  'editor.cxx',
+  'editor.h'
 ]
 
 depends = [dependency('gtkmm-4.0')]
