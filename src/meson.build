@@ -4,7 +4,9 @@ idet_sources = [
   'editor.h'
 ]
 
-depends = [dependency('gtkmm-4.0')]
+depends = [
+  dependency('gtkmm-4.0'),
+]
 
 executable('idet',
   idet_sources,
