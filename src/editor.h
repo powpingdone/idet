@@ -11,11 +11,17 @@
 class editorWindow : public Gtk::Window {
     public:
         editorWindow();
+    protected:
+        void updateLineNumbers();
+
+
     private:
         Gtk::Grid masterGrid; // contains rest of boxes
         Gtk::Paned slaveEditor; // contains textviews relating to actual code editing
-        Gtk::ScrolledWindow sourceHolder;
-        Gtk::TextView textView, sourceLines;
+        Gtk::ScrolledWindow sourceHolder; // scrolls through source code
+        Gtk::TextView sourceCode, // actual code
+            sourceLines; // line numbers
+        int lines = -1; // used by updateLineNumbers
 };
 
 #endif //EDITOR_H
