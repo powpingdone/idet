@@ -1,9 +1,8 @@
 #include "editor.h"
 #include <sigc++/functors/mem_fun.h>
-#include <gtkmm/enums.h>
 #include <sstream>
 
-editorWindow::editorWindow() : slaveEditor(Gtk::Orientation::HORIZONTAL) {
+editorWindow::editorWindow() {
     set_title("editorWindow");
     
     // setup box containing the other component boxes
@@ -13,21 +12,23 @@ editorWindow::editorWindow() : slaveEditor(Gtk::Orientation::HORIZONTAL) {
     // setup editor box
     masterGrid.attach(sourceHolder, 0, 0);
     sourceHolder.set_child(slaveEditor);
-    slaveEditor.set_start_child(sourceLines);
-    slaveEditor.set_shrink_start_child(false);
-    slaveEditor.set_shrink_end_child(false);
-    slaveEditor.set_resize_start_child(false);
-    slaveEditor.set_resize_end_child(false);
-    slaveEditor.set_wide_handle(false);
-    slaveEditor.set_position(48);
-    slaveEditor.set_end_child(sourceCode);
     sourceHolder.set_expand();
+    slaveEditor.set_column_homogeneous(false);
+    slaveEditor.attach(sourceLines, 0, 0);
+    slaveEditor.attach(sourceCode, 1, 0);
+    
+    //setup constraints for "nice line numbering"
+    constrain();
+    slaveEditor.set_layout_manager(eWLayout);
+
     
     // setup lines
     sourceLines.set_editable(false);
     sourceLines.set_cursor_visible(false);
     sourceLines.set_monospace();
+    sourceLines.set_expand();
     sourceCode.set_monospace();
+    sourceCode.set_expand();
     sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &editorWindow::updateLineNumbers));
 }
 
@@ -42,3 +43,138 @@ void editorWindow::updateLineNumbers() {
         buf->set_text(newNumbers.str());
     }
 }
+
+void editorWindow::constrain() {
+    /*
+     * "muh gui boilerplate"
+     * 
+     * Roadmap:
+     * sE, sL, sC are equivalent vars
+     * sE == slaveEditor
+     * sL == sourceLines
+     * sC == sourceCode
+     *
+     * sE.start = sL.start
+     * sL.height = sC.height
+     * sL.end = sC.start 
+     * sC.end = sE.end
+     * sE.top = s{L,C}.top
+     * s{L,C}.bottom = sE.bottom
+     * sL.width = 48
+     * */
+    
+    eWLayout->add_constraint( //bind to start of editor grid
+        Gtk::Constraint::create(
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::START,
+            Gtk::Constraint::Relation::EQ,
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::START,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+    
+    eWLayout->add_constraint( // sync height source code to the linenums
+        Gtk::Constraint::create(
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::HEIGHT,
+            Gtk::Constraint::Relation::EQ,
+            sourceCode.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::HEIGHT,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( // connect the source code to the linenums
+        Gtk::Constraint::create(
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::END,
+            Gtk::Constraint::Relation::GE,
+            sourceCode.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::START,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( //bind to end of editor grid
+        Gtk::Constraint::create(
+            sourceCode.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::END,
+            Gtk::Constraint::Relation::EQ,
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::END,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+    
+    eWLayout->add_constraint( // bind src to grid top
+        Gtk::Constraint::create( 
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::TOP,
+            Gtk::Constraint::Relation::EQ,
+            sourceCode.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::TOP,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( // bind linenumbers to grid top
+        Gtk::Constraint::create( 
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::TOP,
+            Gtk::Constraint::Relation::EQ,
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::TOP,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( // bind src to grid bottom
+        Gtk::Constraint::create( 
+            sourceCode.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::BOTTOM,
+            Gtk::Constraint::Relation::EQ,
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::BOTTOM,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( // bind linenumbers to grid bottom
+        Gtk::Constraint::create( 
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::BOTTOM,
+            Gtk::Constraint::Relation::EQ,
+            slaveEditor.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::BOTTOM,
+            1.0,
+            0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+
+    eWLayout->add_constraint( // make line numbers 48 pix long
+        Gtk::Constraint::create( //TODO: resize dynamically to font
+            sourceLines.make_refptr_constrainttarget(),
+            Gtk::Constraint::Attribute::WIDTH,
+            Gtk::Constraint::Relation::EQ,
+            48.0,
+            Gtk::Constraint::Strength::REQUIRED
+        )
+    );
+}
+
