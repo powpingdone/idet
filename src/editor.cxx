@@ -1,10 +1,13 @@
 #include "editor.h"
-#include <sigc++/functors/mem_fun.h>
+#include <iostream>
 #include <sstream>
 
-editorWindow::editorWindow() {
+mainWindow::mainWindow() {
     set_title("editorWindow");
-    
+    auto kH = Gtk::EventControllerKey::create();
+    kH->signal_key_pressed().connect(sigc::mem_fun(*this, &mainWindow::keyboardHandler), false);
+    add_controller(kH);
+
     // setup box containing the other component boxes
     masterGrid.set_margin(10);
     set_child(masterGrid);
@@ -16,12 +19,13 @@ editorWindow::editorWindow() {
     slaveEditor.set_column_homogeneous(false);
     slaveEditor.attach(sourceLines, 0, 0);
     slaveEditor.attach(sourceCode, 1, 0);
-    
+    masterGrid.attach(ctrlSpc, 0, 1);
+    ctrlSpc.add_child(ctrlSpcView);
+
     //setup constraints for "nice line numbering"
     constrain();
-    slaveEditor.set_layout_manager(eWLayout);
+    slaveEditor.set_layout_manager(eSrcLayout);
 
-    
     // setup lines
     sourceLines.set_editable(false);
     sourceLines.set_cursor_visible(false);
@@ -29,14 +33,20 @@ editorWindow::editorWindow() {
     sourceLines.set_expand();
     sourceCode.set_monospace();
     sourceCode.set_expand();
-    sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &editorWindow::updateLineNumbers));
+    sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));
+
+    // setup ctrlSpc
+    // inspired by both vim-which-key and vim-ctrlspace
+    ctrlSpc.set_revealed(false);
+    ctrlSpc.set_message_type(Gtk::MessageType::INFO);
+        
 }
 
-void editorWindow::updateLineNumbers() {
+void mainWindow::updateLineNumbers() {
     auto buf = sourceLines.get_buffer(), src = sourceCode.get_buffer();
     if(src->get_line_count() != lines) {
-        std::stringstream newNumbers;
         lines = src->get_line_count();
+        std::stringstream newNumbers;
         for(int x = 1; x < lines+1; x++) {
             newNumbers << x << std::endl;
         }
@@ -44,7 +54,14 @@ void editorWindow::updateLineNumbers() {
     }
 }
 
-void editorWindow::constrain() {
+bool mainWindow::keyboardHandler(guint key, guint keycode, Gdk::ModifierType state) {
+    if(key == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
+        return true;
+    }
+    return false;
+}
+
+void mainWindow::constrain() {
     /*
      * "muh gui boilerplate"
      * 
@@ -63,7 +80,7 @@ void editorWindow::constrain() {
      * sL.width = 48
      * */
     
-    eWLayout->add_constraint( //bind to start of editor grid
+    eSrcLayout->add_constraint( // bind to start of editor grid
         Gtk::Constraint::create(
             slaveEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::START,
@@ -76,7 +93,7 @@ void editorWindow::constrain() {
         )
     );
     
-    eWLayout->add_constraint( // sync height source code to the linenums
+    eSrcLayout->add_constraint( // sync height source code to the linenums
         Gtk::Constraint::create(
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::HEIGHT,
@@ -89,7 +106,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( // connect the source code to the linenums
+    eSrcLayout->add_constraint( // connect the source code to the linenums
         Gtk::Constraint::create(
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::END,
@@ -102,7 +119,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( //bind to end of editor grid
+    eSrcLayout->add_constraint( // bind to end of editor grid
         Gtk::Constraint::create(
             sourceCode.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::END,
@@ -115,7 +132,7 @@ void editorWindow::constrain() {
         )
     );
     
-    eWLayout->add_constraint( // bind src to grid top
+    eSrcLayout->add_constraint( // bind src to grid top
         Gtk::Constraint::create( 
             slaveEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::TOP,
@@ -128,7 +145,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( // bind linenumbers to grid top
+    eSrcLayout->add_constraint( // bind linenumbers to grid top
         Gtk::Constraint::create( 
             slaveEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::TOP,
@@ -141,7 +158,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( // bind src to grid bottom
+    eSrcLayout->add_constraint( // bind src to grid bottom
         Gtk::Constraint::create( 
             sourceCode.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
@@ -154,7 +171,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( // bind linenumbers to grid bottom
+    eSrcLayout->add_constraint( // bind linenumbers to grid bottom
         Gtk::Constraint::create( 
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
@@ -167,7 +184,7 @@ void editorWindow::constrain() {
         )
     );
 
-    eWLayout->add_constraint( // make line numbers 48 pix long
+    eSrcLayout->add_constraint( // make line numbers 48 pix long
         Gtk::Constraint::create( //TODO: resize dynamically to font
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::WIDTH,
