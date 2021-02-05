@@ -20,7 +20,7 @@ mainWindow::mainWindow() {
     slaveEditor.attach(sourceLines, 0, 0);
     slaveEditor.attach(sourceCode, 1, 0);
     masterGrid.attach(ctrlSpc, 0, 1);
-    ctrlSpc.add_child(ctrlSpcView);
+    ctrlSpc.add_child(ctrlSpcView.ctrlSpcSelect);
 
     //setup constraints for "nice line numbering"
     constrain();
@@ -39,7 +39,6 @@ mainWindow::mainWindow() {
     // inspired by both vim-which-key and vim-ctrlspace
     ctrlSpc.set_revealed(false);
     ctrlSpc.set_message_type(Gtk::MessageType::INFO);
-        
 }
 
 void mainWindow::updateLineNumbers() {
@@ -56,6 +55,15 @@ void mainWindow::updateLineNumbers() {
 
 bool mainWindow::keyboardHandler(guint key, guint keycode, Gdk::ModifierType state) {
     if(key == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
+        if(ctrlSpcView.isActive()) {
+            ctrlSpcView.stop();
+            ctrlSpc.set_revealed(false);
+        }
+        else {
+            ctrlSpc.set_revealed(true);
+            ctrlSpcView.start();
+            ctrlSpcView.generate();
+        }
         return true;
     }
     return false;
