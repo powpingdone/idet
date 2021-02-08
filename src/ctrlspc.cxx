@@ -1,14 +1,14 @@
 #include "ctrlspc.h"
+#include "gtkmm/label.h"
 #include <memory>
 
 _ctrlSpcView::_ctrlSpcView() {
+    // the whole reason why this is a subclass of Gtk::Widget
     auto kH = Gtk::EventControllerKey::create();
     kH->signal_key_pressed().connect(sigc::mem_fun(*this, &_ctrlSpcView::keyboardHandler), false);
     add_controller(kH);
-
-    // setup list factory
-    ctrlSpcSLIF->signal_setup().connect(sigc::mem_fun(*this, &_ctrlSpcView::setupSLIF));
-    ctrlSpcSLIF->signal_bind().connect(sigc::mem_fun(*this, &_ctrlSpcView::bindSLIF));
+    ctrlSpcSelect.set_column_spacing(12);
+    ctrlSpcSelect.set_min_children_per_line(4);
 }
 
 bool _ctrlSpcView::keyboardHandler(guint key, guint keycode, Gdk::ModifierType state) {
@@ -16,15 +16,10 @@ bool _ctrlSpcView::keyboardHandler(guint key, guint keycode, Gdk::ModifierType s
 }
 
 void _ctrlSpcView::generate() {
-
+    Gtk::Label xx;
+    xx.set_label("test");
+    ctrlSpcSelect.insert(xx,-1);
+    h++;
 }
 
-void _ctrlSpcView::setupSLIF(const Glib::RefPtr<Gtk::ListItem> &item) {
-    auto label = Gtk::Label();
-    item->set_child(label);
-}
-
-void _ctrlSpcView::bindSLIF(const Glib::RefPtr<Gtk::ListItem> &item) {
-    std::dynamic_pointer_cast<Gtk::Label>(item->get_item())->set_label("asdf");
-}
 
