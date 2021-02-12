@@ -13,32 +13,44 @@ mainWindow::mainWindow() {
     set_child(masterGrid);
 
     // setup editor box
+    masterGrid.set_name("masterGrid");
     masterGrid.attach(sourceHolder, 0, 0);
-    sourceHolder.set_child(slaveEditor);
-    sourceHolder.set_expand();
-    slaveEditor.set_column_homogeneous(false);
-    slaveEditor.attach(sourceLines, 0, 0);
-    slaveEditor.attach(sourceCode, 1, 0);
+    masterGrid.set_column_homogeneous();
     masterGrid.attach(ctrlSpc, 0, 1);
-    ctrlSpc.add_child(ctrlSpcView.ctrlSpcSelect);
 
-    //setup constraints for "nice line numbering"
+    // setup constraints for "nice line numbering"
     constrain();
-    slaveEditor.set_layout_manager(eSrcLayout);
-
+    textEditor.set_layout_manager(eSrcLayout);
+    
     // setup lines
+    sourceLines.set_name("sourceLines");
     sourceLines.set_editable(false);
     sourceLines.set_cursor_visible(false);
     sourceLines.set_monospace();
     sourceLines.set_expand();
+   
+    sourceCode.set_name("sourceCode");
     sourceCode.set_monospace();
     sourceCode.set_expand();
     sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));
+    
+    textEditor.set_name("textEditor");
+    textEditor.attach(sourceLines, 0, 0);
+    textEditor.attach(sourceCode, 1, 0);
+    textEditor.set_expand();
+    textEditor.set_column_homogeneous(false);
+    
+    sourceHolder.set_name("sourceHolder");
+    sourceHolder.set_child(textEditor);
+    sourceHolder.set_expand();
 
     // setup ctrlSpc
     // inspired by both vim-which-key and vim-ctrlspace
-    ctrlSpc.set_revealed(false);
-    ctrlSpc.set_message_type(Gtk::MessageType::INFO);
+    ctrlSpc.set_name("ctrlSpc");
+    ctrlSpc.set_child(ctrlSpcView.ctrlSpcSelect);
+    ctrlSpc.set_visible(false);
+    ctrlSpc.set_vexpand(false);
+    ctrlSpc.set_propagate_natural_height();
 }
 
 void mainWindow::updateLineNumbers() {
@@ -57,11 +69,11 @@ bool mainWindow::keyboardHandler(guint key, guint keycode, Gdk::ModifierType sta
     if(key == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
         if(ctrlSpcView.isActive()) {
             ctrlSpcView.stop();
-            ctrlSpc.set_revealed(false);
+            ctrlSpc.set_visible(false);
         }
         else {
-            ctrlSpc.set_revealed(true);
             ctrlSpcView.start();
+            ctrlSpc.set_visible(true);
             ctrlSpcView.generate();
         }
         return true;
@@ -74,23 +86,23 @@ void mainWindow::constrain() {
      * "muh gui boilerplate"
      * 
      * Roadmap:
-     * sE, sL, sC are equivalent vars
-     * sE == slaveEditor
+     * tE, sL, sC are equivalent vars
+     * tE == textEditor
      * sL == sourceLines
      * sC == sourceCode
      *
-     * sE.start = sL.start
+     * tE.start = sL.start
      * sL.height = sC.height
      * sL.end = sC.start 
-     * sC.end = sE.end
-     * sE.top = s{L,C}.top
-     * s{L,C}.bottom = sE.bottom
+     * sC.end = tE.end
+     * tE.top = s{L,C}.top
+     * s{L,C}.bottom = tE.bottom
      * sL.width = 48
      * */
     
     eSrcLayout->add_constraint( // bind to start of editor grid
         Gtk::Constraint::create(
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::START,
             Gtk::Constraint::Relation::EQ,
             sourceLines.make_refptr_constrainttarget(),
@@ -132,7 +144,7 @@ void mainWindow::constrain() {
             sourceCode.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::END,
             Gtk::Constraint::Relation::EQ,
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::END,
             1.0,
             0,
@@ -142,7 +154,7 @@ void mainWindow::constrain() {
     
     eSrcLayout->add_constraint( // bind src to grid top
         Gtk::Constraint::create( 
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::TOP,
             Gtk::Constraint::Relation::EQ,
             sourceCode.make_refptr_constrainttarget(),
@@ -155,7 +167,7 @@ void mainWindow::constrain() {
 
     eSrcLayout->add_constraint( // bind linenumbers to grid top
         Gtk::Constraint::create( 
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::TOP,
             Gtk::Constraint::Relation::EQ,
             sourceLines.make_refptr_constrainttarget(),
@@ -171,7 +183,7 @@ void mainWindow::constrain() {
             sourceCode.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
             Gtk::Constraint::Relation::EQ,
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
             1.0,
             0,
@@ -184,7 +196,7 @@ void mainWindow::constrain() {
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
             Gtk::Constraint::Relation::EQ,
-            slaveEditor.make_refptr_constrainttarget(),
+            textEditor.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::BOTTOM,
             1.0,
             0,

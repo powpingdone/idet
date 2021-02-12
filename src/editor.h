@@ -4,11 +4,6 @@
 #include "ctrlspc.h"
 #include <gtkmm.h>
 
-class _eSrcLayout : public Gtk::ConstraintLayout {
-    public:
-        _eSrcLayout() : Gtk::ConstraintLayout() {;}
-};
-
 class mainWindow : public Gtk::Window {
     public:
         mainWindow();
@@ -22,14 +17,14 @@ class mainWindow : public Gtk::Window {
 
     private:
         Gtk::Grid masterGrid, // contains rest of boxes
-            slaveEditor; // contains textviews relating to actual code editing
+            textEditor; // contains textviews relating to actual code editing
         Gtk::ScrolledWindow sourceHolder; // scrolls through source code
         Gtk::TextView sourceCode, // actual code
             sourceLines; // line numbers
         _ctrlSpcView ctrlSpcView;
-        Gtk::InfoBar ctrlSpc;
+        Gtk::ScrolledWindow ctrlSpc;
         bool ctrlSpcUp = false;
-        Glib::RefPtr<_eSrcLayout> eSrcLayout = Glib::RefPtr<_eSrcLayout>(new _eSrcLayout()); // specific layout for line numbers + srccode
+        Glib::RefPtr<Gtk::ConstraintLayout> eSrcLayout = Gtk::ConstraintLayout::create(); // specific layout for line numbers + srccode
         int lines = -1; // used by updateLineNumbers
 };
 
