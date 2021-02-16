@@ -3,7 +3,8 @@ idet_sources = [
   'editor.cxx',
   'editor.h',
   'ctrlspc.cxx',
-  'ctrlspc.h'
+  'ctrlspc.h',
+  'common.h',
 ]
 
 depends = [

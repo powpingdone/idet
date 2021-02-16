@@ -2,17 +2,24 @@
 #define CTRLSPC_H
 
 #include <gtkmm.h>
+#include <functional>
+#include <algorithm>
 
 class keyAction {
     public:
         guint key;
         Glib::RefPtr<keyAction> next = nullptr, // next potential key
             subKey = nullptr; // sub tree of keys
+        std::string name;
+        bool (*action)(void*) = nullptr;
+        void *args = nullptr;
 };
 
 class _ctrlSpcView : public Gtk::Widget {
     public: 
         _ctrlSpcView();
+        bool add_action(std::string, std::string, bool (*func)(void*), void *); 
+        bool add_action(std::string, std::string, bool (*func)(void*)); 
         void start() {active = true;}
         void stop() {active = false;}
         bool isActive() {return active;}
@@ -22,7 +29,7 @@ class _ctrlSpcView : public Gtk::Widget {
         bool keyboardHandler(guint, guint, Gdk::ModifierType); // handle keyboard events for ctrlSpc
         void constrain();
     private:
-        Glib::RefPtr<keyAction> head, treeptr;
+        Glib::RefPtr<keyAction> head = nullptr, treeptr = nullptr;
         Glib::RefPtr<Gtk::ConstraintLayout> ctrlSpcRestrictor = Gtk::ConstraintLayout::create(); // restricts flowbox text explosions
         Gtk::FlowBox textContain; // actual text
         bool active = false;

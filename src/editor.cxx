@@ -1,5 +1,5 @@
 #include "editor.h"
-#include <iostream>
+#include "common.h"
 #include <sstream>
 
 mainWindow::mainWindow() {
@@ -47,10 +47,9 @@ mainWindow::mainWindow() {
     // setup ctrlSpc
     // inspired by both vim-which-key and vim-ctrlspace
     ctrlSpc.set_name("ctrlSpc");
-    ctrlSpc.set_child(ctrlSpcView.ctrlSpcSelect);
+    ctrlSpc.append(ctrlSpcView.ctrlSpcSelect);
     ctrlSpc.set_visible(false);
     ctrlSpc.set_vexpand(false);
-    ctrlSpc.set_propagate_natural_height();
 }
 
 void mainWindow::updateLineNumbers() {

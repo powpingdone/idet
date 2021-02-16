@@ -22,7 +22,7 @@ class mainWindow : public Gtk::Window {
         Gtk::TextView sourceCode, // actual code
             sourceLines; // line numbers
         _ctrlSpcView ctrlSpcView;
-        Gtk::ScrolledWindow ctrlSpc;
+        Gtk::Box ctrlSpc;
         bool ctrlSpcUp = false;
         Glib::RefPtr<Gtk::ConstraintLayout> eSrcLayout = Gtk::ConstraintLayout::create(); // specific layout for line numbers + srccode
         int lines = -1; // used by updateLineNumbers
