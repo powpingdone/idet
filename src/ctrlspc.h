@@ -18,8 +18,8 @@ class keyAction {
 class _ctrlSpcView : public Gtk::Widget {
     public: 
         _ctrlSpcView();
-        bool add_action(std::wstring, std::wstring, bool (*func)(void*), void *); 
-        bool add_action(std::wstring, std::wstring, bool (*func)(void*)); 
+        bool add_action(Glib::ustring, Glib::ustring, bool (*func)(void*), void *); 
+        bool add_action(Glib::ustring, Glib::ustring, bool (*func)(void*)); 
         void start() {active = true;}
         void stop() {active = false;}
         bool isActive() {return active;}

@@ -44,7 +44,9 @@ void _ctrlSpcView::generate() {
         while(node) {
             Glib::ustring build;// = "[" + (wchar_t)gdk_keyval_to_unicode(node->key) + "] " + node->name;
             build.append("[");
-            build.append(gdk_keyval_to_unicode(node->key));
+            build += (char)gdk_keyval_to_unicode(node->key);
+            build.append("] ");
+            build.append(node->name);
             Gtk::Label newLabel;
             newLabel.set_label(build);
             node = node->next;
@@ -52,23 +54,23 @@ void _ctrlSpcView::generate() {
     }
 }
 
-bool _ctrlSpcView::add_action(std::wstring name, std::wstring keybind, bool (*func)(void*)) {
+bool _ctrlSpcView::add_action(Glib::ustring name, Glib::ustring keybind, bool (*func)(void*)) {
     return add_action(name, keybind, func, nullptr);
 }
 
-bool _ctrlSpcView::add_action(std::wstring name, std::wstring keybind, bool (*func)(void*), void *args) {
+bool _ctrlSpcView::add_action(Glib::ustring name, Glib::ustring keybind, bool (*func)(void*), void *args) {
     if(!head) { // create action tree
         head = Glib::RefPtr<keyAction>(new keyAction());
         head->key = gdk_unicode_to_keyval(keybind[0]);
     }
-    LOG("Creating %ls, keybinding %ls", name.c_str(), keybind.c_str());
+    LOG("Creating %s, keybinding %s", name.c_str(), keybind.c_str());
 
     // actual action adding
     auto base = head, curr = head;
     for(unsigned int x = 0; keybind.length() > x; x++) {
         guint32 keycheck = gdk_unicode_to_keyval(keybind[x]);
         if(!curr) {
-            LOG("Unable to build keybind \"%ls\": current node does not exist!", keybind.c_str());
+            LOG("Unable to build keybind \"%s\": current node does not exist!", keybind.c_str());
             return false;
         }
         while(curr) { // go through current (sub)tree
@@ -81,7 +83,7 @@ bool _ctrlSpcView::add_action(std::wstring name, std::wstring keybind, bool (*fu
                     break;
                 }
                 else if((!curr->subKey && curr->action) || (curr->subKey && keybind.length() <= x + 1)) {
-                    LOG("Unable to build keybind \"%ls\": %s. Freeing args...", keybind.c_str(), (!curr->subKey) ?
+                    LOG("Unable to build keybind \"%s\": %s. Freeing args...", keybind.c_str(), (!curr->subKey) ?
                             "at end of already made keybind chain, but keybind has action predefined" :
                             "last keybind char found, but was already allocated to a pattern"); 
                     free(args);
