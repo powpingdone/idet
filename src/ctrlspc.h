@@ -10,7 +10,7 @@ class keyAction {
         guint key;
         Glib::RefPtr<keyAction> next = nullptr, // next potential key
             subKey = nullptr; // sub tree of keys
-        std::string name;
+        Glib::ustring name;
         bool (*action)(void*) = nullptr;
         void *args = nullptr;
 };
@@ -18,8 +18,8 @@ class keyAction {
 class _ctrlSpcView : public Gtk::Widget {
     public: 
         _ctrlSpcView();
-        bool add_action(std::string, std::string, bool (*func)(void*), void *); 
-        bool add_action(std::string, std::string, bool (*func)(void*)); 
+        bool add_action(std::wstring, std::wstring, bool (*func)(void*), void *); 
+        bool add_action(std::wstring, std::wstring, bool (*func)(void*)); 
         void start() {active = true;}
         void stop() {active = false;}
         bool isActive() {return active;}
