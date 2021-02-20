@@ -2,38 +2,28 @@
 #define CTRLSPC_H
 
 #include <gtkmm.h>
-#include <functional>
-#include <algorithm>
+#include "actions.h"
+#include "glibmm/refptr.h"
 
-class keyAction {
-    public:
-        guint key;
-        Glib::RefPtr<keyAction> next = nullptr, // next potential key
-            subKey = nullptr; // sub tree of keys
-        Glib::ustring name;
-        bool (*action)(void*) = nullptr;
-        void *args = nullptr;
-};
-
-class _ctrlSpcView : public Gtk::Widget {
+class _ctrlSpcView {
     public: 
         _ctrlSpcView();
-        bool add_action(Glib::ustring, Glib::ustring, bool (*func)(void*), void *); 
-        bool add_action(Glib::ustring, Glib::ustring, bool (*func)(void*)); 
-        void start() {active = true;}
-        void stop() {active = false;}
-        bool isActive() {return active;}
+        bool add_action(std::vector<Glib::ustring>, Glib::ustring, Glib::RefPtr<Action>, Glib::RefPtr<void>);
+        bool add_action(std::vector<Glib::ustring>, Glib::ustring, Glib::RefPtr<Action>);
         void generate(); // generate list values
-        Gtk::Grid ctrlSpcSelect; // this is public so that it can be appended to the editor window
-    protected:
         bool keyboardHandler(guint, guint, Gdk::ModifierType); // handle keyboard events for ctrlSpc
-        void constrain();
+        
+        void start()    {active = true;}
+        void stop()     {active = false; treeptr = nullptr;}
+        bool isActive() {return active;}
+        
+        Gtk::Grid ctrlSpcSelect; // this is public so that it can be appended to the editor window
     private:
-        Glib::RefPtr<keyAction> head = nullptr, treeptr = nullptr;
-        Glib::RefPtr<Gtk::ConstraintLayout> ctrlSpcRestrictor = Gtk::ConstraintLayout::create(); // restricts flowbox text explosions
+        Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>> 
+            head = Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>>(new std::unordered_map<guint, Glib::RefPtr<Action>>()),
+            treeptr = nullptr;
         Gtk::FlowBox textContain; // actual text
         bool active = false;
-        int h=0;
 };
 
 #endif

@@ -1,13 +1,8 @@
 #include "ctrlspc.h"
+#include "actions.h"
 #include "common.h"
-#include <sstream>
 
 _ctrlSpcView::_ctrlSpcView() {
-    // the whole reason why this is a subclass of Gtk::Widget
-    auto kH = Gtk::EventControllerKey::create();
-    kH->signal_key_pressed().connect(sigc::mem_fun(*this, &_ctrlSpcView::keyboardHandler), false);
-    add_controller(kH);
-
     // setup flow container to use proper settings
     textContain.set_column_spacing(12);
     textContain.set_row_spacing(1);
@@ -25,7 +20,26 @@ _ctrlSpcView::_ctrlSpcView() {
     ctrlSpcSelect.set_name("ctrlSpcSelect");
 }
 
-bool _ctrlSpcView::keyboardHandler(guint key, guint keycode, Gdk::ModifierType state) {
+bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
+    if(!active)
+        return false;
+    
+    if(treeptr->find(keyval) != treeptr->end()) { // if there is a valid key in the treeptr
+        LOG("Caught action %d, ie '%c', which is in tree.", keyval, gdk_keyval_to_unicode(keyval));
+        if(treeptr->at(keyval)->activateable()) 
+            treeptr->at(keyval)->activate();
+        
+        if(treeptr->at(keyval)->category()) { // set up next tree
+            treeptr = treeptr->at(keyval)->subKey();
+            this->generate(); 
+        }
+        else { // deactivate
+            ctrlSpcSelect.set_visible(false);
+            this->stop();
+            treeptr = nullptr;
+        }
+        return true;
+    }
     return false;
 }
 
@@ -35,70 +49,93 @@ void _ctrlSpcView::generate() {
     } // woow gtk how insensitive of you
     
     if(!head) {
-        LOG("Somehow attemting to generate with a empty head! Not generating!");
+        LOG("Somehow attempting to generate with a NULL head! Not generating!");
         return;
     }
+    
+    if(!treeptr) // if keyboardHandler hasnt activated yet
+        treeptr = head;
+    auto node = treeptr; 
 
-    if(treeptr) { // keyboardHandler will select the correct thing to use
-        auto node = treeptr;
-        while(node) {
-            Glib::ustring build;// = "[" + (wchar_t)gdk_keyval_to_unicode(node->key) + "] " + node->name;
-            build.append("[");
-            build += (char)gdk_keyval_to_unicode(node->key);
-            build.append("] ");
-            build.append(node->name);
-            Gtk::Label newLabel;
-            newLabel.set_label(build);
-            node = node->next;
+    for(auto x : *node) {
+        Glib::ustring build;
+        build.append("[");
+        // note that is is possibly a temp fix
+        // idk if this will work for actual unicode chars
+        // WE WILL SEE, FOR NOW THIS WORKS
+        build += (char)gdk_keyval_to_unicode(x.first);
+        build.append("] ");
+        build.append(x.second->getName());
+        Gtk::Label newLabel;
+        newLabel.set_label(build);
+        textContain.insert(newLabel, -1);
+    }
+}
+
+bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func) {
+    return add_action(names, keybind, func, nullptr);
+}
+
+bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func, Glib::RefPtr<void> args) {
+    LOG("Creating %s, keybinding %s", names.at(names.size()-1).c_str(), keybind.c_str());
+    
+    // some error cases
+    if(keybind.length() == 0) {
+        LOG("Keybinding length is 0, which is impossible to make bindings for! Returning false.");
+        return false;
+    }
+
+    if(keybind.length() < names.size()) {
+        LOG("Keybinding size is less than names specified, returning false.");
+        return false;
+    }
+
+    // pre-add operation offset
+    int offset = 0;
+    if(keybind.length() > names.size()) {
+        // this usually means that less names were specified than were mapped to keybinds
+        // thats fine, just offset the accessor
+        offset = keybind.length() - names.size();
+    }
+    
+    // actual adding
+    auto table = head;
+    for(uint pos = 0; pos < keybind.length(); pos++) {
+        guint keyval = gdk_unicode_to_keyval(keybind[pos]);
+        if(table->find(keyval) != table->end()) { // if already in table 
+            if(!table->at(keyval)->activateable()) { // and not activateable
+                // then use that table
+                table = table->at(keyval)->subKey();
+                continue;
+            }
+            else { // it is activateable
+                LOG("Keybinding \"%s\" at pos %d (aka '%c') already has activateable binding."
+                        " Returning false.", keybind.c_str(), pos, keybind[pos]);
+                return false;
+            }
         }
-    }
-}
+        else { // it is not in table
+            if(pos + 1 < keybind.length()) // if pos is not last, insert a category
+                table->insert({keyval, Glib::RefPtr<Action>(new CategoryAction())});
+            else { // insert the final specified function
+                table->insert({keyval, func});
+                table->at(keyval)->setArgs(args);
+            }
 
-bool _ctrlSpcView::add_action(Glib::ustring name, Glib::ustring keybind, bool (*func)(void*)) {
-    return add_action(name, keybind, func, nullptr);
-}
-
-bool _ctrlSpcView::add_action(Glib::ustring name, Glib::ustring keybind, bool (*func)(void*), void *args) {
-    if(!head) { // create action tree
-        head = Glib::RefPtr<keyAction>(new keyAction());
-        head->key = gdk_unicode_to_keyval(keybind[0]);
-    }
-    LOG("Creating %s, keybinding %s", name.c_str(), keybind.c_str());
-
-    // actual action adding
-    auto base = head, curr = head;
-    for(unsigned int x = 0; keybind.length() > x; x++) {
-        guint32 keycheck = gdk_unicode_to_keyval(keybind[x]);
-        if(!curr) {
-            LOG("Unable to build keybind \"%s\": current node does not exist!", keybind.c_str());
+            if((int)(pos)-offset >= 0) // set name if the offset is not negative
+                table->at(keyval)->setName(names.at(pos-offset));
+            else 
+                LOG("Keybinding \"%s\" at pos %d (aka '%c') does not have a corresponding default name,"
+                        " despite needing one! Amt of default names given is %zu, using \"\" instead.",
+                        keybind.c_str(), pos, keybind[pos], names.size());
+        }
+        
+        if(pos + 1 == keybind.length() && table->find(keyval) == table->end()) {// if last binding and not in table
+            LOG("After iterating through keybinding \"%s\", "
+                    "there are no more values to attempt to bind to. Returning false.", keybind.c_str());
             return false;
         }
-        while(curr) { // go through current (sub)tree
-            if(curr->key == keycheck) {
-                if(!curr->subKey && keybind.length() > x + 1) {
-                    LOG("%c (%d) found, but no subKey allocated.", keybind[x], keycheck);
-                    curr->subKey = Glib::RefPtr<keyAction>(new keyAction());
-                    curr->subKey->key = gdk_unicode_to_keyval(keybind[x + 1]);
-                    curr = curr->subKey;
-                    break;
-                }
-                else if((!curr->subKey && curr->action) || (curr->subKey && keybind.length() <= x + 1)) {
-                    LOG("Unable to build keybind \"%s\": %s. Freeing args...", keybind.c_str(), (!curr->subKey) ?
-                            "at end of already made keybind chain, but keybind has action predefined" :
-                            "last keybind char found, but was already allocated to a pattern"); 
-                    free(args);
-                    return false;
-                }
-            }
-            else if((curr->next && gdk_keyval_to_unicode(curr->next->key) > keybind[x]) || !curr->next) {
-                LOG("%c (%d) not found, and %s. Allocating.", keybind[x], keycheck, curr->next ? 
-                        "next potential keybind is greater than the current keybind" :
-                        "there are no more nodes in the list");
-                curr->next = Glib::RefPtr<keyAction>(new keyAction());
-                curr->next->key = keycheck;
-            }
-            curr = curr->next;
-        }
     }
+
     return true;
 }

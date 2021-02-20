@@ -50,6 +50,7 @@ mainWindow::mainWindow() {
     ctrlSpc.append(ctrlSpcView.ctrlSpcSelect);
     ctrlSpc.set_visible(false);
     ctrlSpc.set_vexpand(false);
+    ctrlSpc.set_focus_on_click();
 }
 
 void mainWindow::updateLineNumbers() {
@@ -64,20 +65,23 @@ void mainWindow::updateLineNumbers() {
     }
 }
 
-bool mainWindow::keyboardHandler(guint key, guint keycode, Gdk::ModifierType state) {
-    if(key == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
+bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
+    if(keyval == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
         if(ctrlSpcView.isActive()) {
+            LOG("Deactivating ctrlSpc.");
             ctrlSpcView.stop();
             ctrlSpc.set_visible(false);
         }
         else {
+            LOG("Activating ctrlSpc.");
             ctrlSpcView.start();
             ctrlSpc.set_visible(true);
             ctrlSpcView.generate();
         }
         return true;
     }
-    return false;
+    // if the previous does not happen, try checking here
+    return ctrlSpcView.keyboardHandler(keyval, keycode, state); 
 }
 
 void mainWindow::constrain() {

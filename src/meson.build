@@ -4,6 +4,8 @@ idet_sources = [
   'editor.h',
   'ctrlspc.cxx',
   'ctrlspc.h',
+  'actions.h',
+  'actions.cxx',
   'common.h',
 ]
 

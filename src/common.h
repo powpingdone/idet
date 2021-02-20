@@ -1,4 +1,4 @@
 #include <cstdio>
 
 #define LOG(message, args...) \
-    printf("%s:%s(L%d)# \n" message, __FILE__, __func__, __LINE__, ##args)
+    printf("%s:L%d->%s()# " message "\n", __FILE__, __LINE__, __func__, ##args)
