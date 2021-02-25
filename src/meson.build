@@ -6,6 +6,8 @@ idet_sources = [
   'ctrlspc.h',
   'actions.h',
   'actions.cxx',
+  'text.h',
+  'text.cxx',
   'common.h',
 ]
 

@@ -1,5 +1,6 @@
 #include "editor.h"
 #include "common.h"
+#include "text.h"
 #include <sstream>
 
 mainWindow::mainWindow() {
@@ -32,7 +33,6 @@ mainWindow::mainWindow() {
     sourceCode.set_name("sourceCode");
     sourceCode.set_monospace();
     sourceCode.set_expand();
-    sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));
     
     textEditor.set_name("textEditor");
     textEditor.attach(sourceLines, 0, 0);
@@ -51,6 +51,11 @@ mainWindow::mainWindow() {
     ctrlSpc.set_visible(false);
     ctrlSpc.set_vexpand(false);
     ctrlSpc.set_focus_on_click();
+
+    // for now, use just a sample buffer
+    buffers.push_back(ppdTextBuffer("new 1"));
+    sourceCode.set_buffer(buffers.at(0).buffer());
+    regenSCSignals();
 }
 
 void mainWindow::updateLineNumbers() {

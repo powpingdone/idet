@@ -13,9 +13,9 @@ class _ctrlSpcView {
         void generate(); // generate list values
         bool keyboardHandler(guint, guint, Gdk::ModifierType); // handle keyboard events for ctrlSpc
         
-        void start()    {active = true;}
-        void stop()     {active = false; treeptr = nullptr;}
-        bool isActive() {return active;}
+        void start()          {active = true;}
+        void stop()           {active = false; treeptr = nullptr;}
+        bool isActive() const {return active;}
         
         Gtk::Grid ctrlSpcSelect; // this is public so that it can be appended to the editor window
     private:
