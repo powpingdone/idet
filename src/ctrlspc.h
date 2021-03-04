@@ -3,7 +3,6 @@
 
 #include <gtkmm.h>
 #include "actions.h"
-#include "glibmm/refptr.h"
 
 class _ctrlSpcView {
     public: 

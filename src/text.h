@@ -13,7 +13,7 @@ class ppdTextBuffer {
             if(file != "" && Glib::file_test(file, Glib::FileTest::IS_REGULAR)) 
                 this->file = Gio::File::create_for_path(file);
         }
-    
+
         Glib::ustring                 getName()     const {return name;}
         Glib::ustring                 getFileName() const {return fileName;}
         bool                          isEditable()  const {return editable;}
@@ -29,13 +29,15 @@ class ppdTextBuffer {
         Glib::RefPtr<Gtk::TextBuffer> selfbuffer = Gtk::TextBuffer::create();
 };
 
+// container of files
 class fileList {
     public:
-        fileList(Gtk::TextView* view) {
-            this->view = view;
-        }
+        void                          append(Glib::ustring name, Glib::ustring file="", bool editable=""); 
+        void                          deleteByName(Glib::ustring name);
+        Glib::RefPtr<Gtk::TextBuffer> getBufferByName(Glib::ustring name) const;
+
+        inline bool nameExists(Glib::ustring name) const {return getBufferByName(name) != nullptr;}
     private:
-        Gtk::TextView *view;
         std::vector<ppdTextBuffer> buffers;
 };
 

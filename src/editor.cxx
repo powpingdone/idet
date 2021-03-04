@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "actions.h"
 #include "common.h"
 #include "text.h"
 #include <sstream>
@@ -53,9 +54,16 @@ mainWindow::mainWindow() {
     ctrlSpc.set_focus_on_click();
 
     // for now, use just a sample buffer
-    buffers.push_back(ppdTextBuffer("new 1"));
-    sourceCode.set_buffer(buffers.at(0).buffer());
+    buffers.append("new 1");
+    sourceCode.set_buffer(buffers.getBufferByName("new 1"));
     regenSCSignals();
+
+    // and then actions
+    // but first: macros
+#define NAME(x...) std::vector<Glib::ustring>(x)
+#define ACTION(x) Glib::RefPtr<Action>(new x)
+    
+    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(buffers, this)));
 }
 
 void mainWindow::updateLineNumbers() {
@@ -68,6 +76,15 @@ void mainWindow::updateLineNumbers() {
         }
         buf->set_text(newNumbers.str());
     }
+}
+
+bool mainWindow::swBuffer(Glib::ustring name) {
+    if(buffers.nameExists(name)) {
+        sourceCode.set_buffer(buffers.getBufferByName(name));
+        regenSCSignals();
+        return true;
+    }
+    return false;
 }
 
 bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
@@ -221,5 +238,8 @@ void mainWindow::constrain() {
             Gtk::Constraint::Strength::REQUIRED
         )
     );
+
+    // man all of this just to have dynamic source line nums that look nice
+    // yes i could have done the lang, but thats no fun
 }
 

@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 #include "common.h"
+#include "gtkmm/filechooserdialog.h"
 #include "text.h"
 
 // BASE ACTION CLASS
@@ -43,20 +44,52 @@ class CategoryAction : public Action {
     CategoryAction() {
         active = false;
         dir = true;
-        setSubKey(Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>>(new std::unordered_map<guint, Glib::RefPtr<Action>>()));
+        setSubKey(
+                Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>>
+                (new std::unordered_map<guint, Glib::RefPtr<Action>>())
+        );
     }
 };
 
 // OpenFile: action to open a file
-class OpenFile : public Action { 
-    public: OpenFile(fileList &win) {
-        active = true; dir = false;
-    } 
+template<typename T> class OpenFile : public Action { 
+    public:
+        OpenFile(fileList &win, T *windowPtr) {
+            active = true; dir = false;
+            this->files = win;
+            this->windowPtr = windowPtr;
+        }
     protected: 
-        bool action();
-        void signal();
+        bool action() {
+            auto dialog = new Gtk::FileChooserDialog("Open File", Gtk::FileChooser::Action::OPEN);
+            dialog->set_transient_for(*windowPtr);
+            dialog->set_modal();
+            dialog->signal_response().connect(sigc::bind(sigc::mem_fun(*this, &OpenFile<T>::signal), dialog));
+            dialog->add_button("_Ok", Gtk::ResponseType::OK);
+            dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
+            dialog->show();
+            return true;
+        }
+        
+        void signal(int response, Gtk::FileChooserDialog* dialog) {
+            switch(response) {
+                case Gtk::ResponseType::OK: {
+                    auto file = dialog->get_file()->get_path();
+                    LOG("Opening file %s", file);
+                    files.append(file, file, true);
+                    windowPtr->swBuffer(file);
+                    break;
+                }
+                case Gtk::ResponseType::CANCEL:
+                default: {
+                    LOG("Cancelled!");
+                }
+        }
+    delete dialog;
+}
     private:
-        fileList win;
+        fileList files;
+        T *windowPtr; //hack to get around recursive definition
 };
 
 #endif

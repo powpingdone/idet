@@ -9,6 +9,7 @@ class mainWindow : public Gtk::Window {
     public:
         mainWindow();
         // regenerate the signals when the buffer is changed
+        bool swBuffer(Glib::ustring);
         void regenSCSignals() {sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));}
 
     protected:
@@ -27,7 +28,7 @@ class mainWindow : public Gtk::Window {
         Gtk::Box                            ctrlSpc; // ctrlspc container
         Glib::RefPtr<Gtk::ConstraintLayout> eSrcLayout = Gtk::ConstraintLayout::create(); // specific layout for line numbers + srccode
         int                                 lines = -1; // used by updateLineNumbers to check if line numbers changed
-        fileList                            buffers;
+        fileList                            buffers; // all text buffers
 };
 
 #endif //EDITOR_H
