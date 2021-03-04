@@ -23,24 +23,24 @@ mainWindow::mainWindow() {
     // setup constraints for "nice line numbering"
     constrain();
     textEditor.set_layout_manager(eSrcLayout);
-    
+
     // setup lines
     sourceLines.set_name("sourceLines");
     sourceLines.set_editable(false);
     sourceLines.set_cursor_visible(false);
     sourceLines.set_monospace();
     sourceLines.set_expand();
-   
+
     sourceCode.set_name("sourceCode");
     sourceCode.set_monospace();
     sourceCode.set_expand();
-    
+
     textEditor.set_name("textEditor");
     textEditor.attach(sourceLines, 0, 0);
     textEditor.attach(sourceCode, 1, 0);
     textEditor.set_expand();
     textEditor.set_column_homogeneous(false);
-    
+
     sourceHolder.set_name("sourceHolder");
     sourceHolder.set_child(textEditor);
     sourceHolder.set_expand();
@@ -62,9 +62,8 @@ mainWindow::mainWindow() {
     // but first: macros
 #define NAME(x...) std::vector<Glib::ustring>(x)
 #define ACTION(x) Glib::RefPtr<Action>(new x)
-    
-    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(&buffers, this)));
 
+    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(&buffers, this)));
 }
 
 void mainWindow::updateLineNumbers() {
@@ -72,9 +71,7 @@ void mainWindow::updateLineNumbers() {
     if(src->get_line_count() != lines) {
         lines = src->get_line_count();
         std::stringstream newNumbers;
-        for(int x = 1; x < lines+1; x++) {
-            newNumbers << x << std::endl;
-        }
+        for(int x = 1; x < lines + 1; x++) { newNumbers << x << std::endl; }
         buf->set_text(newNumbers.str());
     }
 }
@@ -96,8 +93,7 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
             LOG("Deactivating ctrlSpc.");
             ctrlSpcView.stop();
             ctrlSpc.set_visible(false);
-        }
-        else {
+        } else {
             LOG("Activating ctrlSpc.");
             ctrlSpcView.start();
             ctrlSpc.set_visible(true);
@@ -106,10 +102,11 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
         return true;
     }
     // if the previous does not happen, try checking here
-    return ctrlSpcView.keyboardHandler(keyval, keycode, state); 
+    return ctrlSpcView.keyboardHandler(keyval, keycode, state);
 }
 
 void mainWindow::constrain() {
+    // clang-format off
     /*
      * "muh gui boilerplate"
      * 
@@ -244,5 +241,5 @@ void mainWindow::constrain() {
 
     // man all of this just to have dynamic source line nums that look nice
     // yes i could have done the lang, but thats no fun
+    // clang-format on
 }
-

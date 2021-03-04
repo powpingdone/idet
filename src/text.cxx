@@ -54,6 +54,6 @@ void ppdTextBuffer::reload() {
     char* contents;
     gsize amt;
     fileObj()->load_contents(contents, amt);
-    buffer()->set_text(contents, contents+amt);
+    buffer()->set_text(contents, contents + amt);
     g_free(contents);
 }

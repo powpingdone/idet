@@ -1,3 +1,2 @@
-#include <gtkmm.h>
 #include "actions.h"
-
+#include <gtkmm.h>
