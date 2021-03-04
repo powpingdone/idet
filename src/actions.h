@@ -3,7 +3,6 @@
 
 #include <gtkmm.h>
 #include "common.h"
-#include "gtkmm/filechooserdialog.h"
 #include "text.h"
 
 // BASE ACTION CLASS
@@ -54,7 +53,7 @@ class CategoryAction : public Action {
 // OpenFile: action to open a file
 template<typename T> class OpenFile : public Action { 
     public:
-        OpenFile(fileList &win, T *windowPtr) {
+        OpenFile(fileList *win, T *windowPtr) {
             active = true; dir = false;
             this->files = win;
             this->windowPtr = windowPtr;
@@ -74,10 +73,11 @@ template<typename T> class OpenFile : public Action {
         void signal(int response, Gtk::FileChooserDialog* dialog) {
             switch(response) {
                 case Gtk::ResponseType::OK: {
-                    auto file = dialog->get_file()->get_path();
-                    LOG("Opening file %s", file);
-                    files.append(file, file, true);
-                    windowPtr->swBuffer(file);
+                    auto file = Glib::ustring(dialog->get_file()->get_path());
+                    LOG("Opening file %s", file.c_str());
+                    files->append(file, file, true);
+                    if(!windowPtr->swBuffer(file))
+                        LOG("Failed to open file!");
                     break;
                 }
                 case Gtk::ResponseType::CANCEL:
@@ -88,7 +88,7 @@ template<typename T> class OpenFile : public Action {
     delete dialog;
 }
     private:
-        fileList files;
+        fileList *files;
         T *windowPtr; //hack to get around recursive definition
 };
 

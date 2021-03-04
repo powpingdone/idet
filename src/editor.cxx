@@ -63,7 +63,8 @@ mainWindow::mainWindow() {
 #define NAME(x...) std::vector<Glib::ustring>(x)
 #define ACTION(x) Glib::RefPtr<Action>(new x)
     
-    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(buffers, this)));
+    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(&buffers, this)));
+
 }
 
 void mainWindow::updateLineNumbers() {
@@ -80,7 +81,9 @@ void mainWindow::updateLineNumbers() {
 
 bool mainWindow::swBuffer(Glib::ustring name) {
     if(buffers.nameExists(name)) {
+        LOG("Swapping to buffer %s", name.c_str());
         sourceCode.set_buffer(buffers.getBufferByName(name));
+        buffers.setCurrentBufByName(name);
         regenSCSignals();
         return true;
     }

@@ -9,8 +9,12 @@ class mainWindow : public Gtk::Window {
     public:
         mainWindow();
         // regenerate the signals when the buffer is changed
+        void regenSCSignals() {
+            sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));
+            updateLineNumbers();
+        }
+        
         bool swBuffer(Glib::ustring);
-        void regenSCSignals() {sourceCode.get_buffer()->signal_changed().connect(sigc::mem_fun(*this, &mainWindow::updateLineNumbers));}
 
     protected:
         void updateLineNumbers(); // update textview sourceLines with new line numbers

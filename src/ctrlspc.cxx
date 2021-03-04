@@ -30,14 +30,15 @@ bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierTyp
             treeptr->at(keyval)->activate();
         
         if(treeptr->at(keyval)->category()) { // set up next tree
+            LOG("Generating next tree.");
             treeptr = treeptr->at(keyval)->subKey();
-            this->generate(); 
         }
         else { // deactivate
-            ctrlSpcSelect.set_visible(false);
+            LOG("Hit endof tree, cleaning up");
             this->stop();
             treeptr = nullptr;
         }
+        this->generate(); 
         return true;
     }
     return false;
@@ -48,27 +49,29 @@ void _ctrlSpcView::generate() {
         textContain.remove(*(textContain.get_child_at_index(0)->get_child())); // remove them
     } // woow gtk how insensitive of you
     
-    if(!head) {
-        LOG("Somehow attempting to generate with a NULL head! Not generating!");
-        return;
-    }
-    
-    if(!treeptr) // if keyboardHandler hasnt activated yet
-        treeptr = head;
-    auto node = treeptr; 
+    if(active) {
+        if(!head) {
+            LOG("Somehow attempting to generate with a NULL head! Not generating!");
+            return;
+        }
+        
+        if(!treeptr) // if keyboardHandler hasnt activated yet
+            treeptr = head;
+        auto node = *treeptr; 
 
-    for(auto x : *node) {
-        Glib::ustring build;
-        build.append("[");
-        // note that is is possibly a temp fix
-        // idk if this will work for actual unicode chars
-        // WE WILL SEE, FOR NOW THIS WORKS
-        build += (char)gdk_keyval_to_unicode(x.first);
-        build.append("] ");
-        build.append(x.second->getName());
-        Gtk::Label newLabel;
-        newLabel.set_label(build);
-        textContain.insert(newLabel, -1);
+        for(auto x : node) {
+            Glib::ustring build;
+            build.append("[");
+            // note that is is possibly a temp fix
+            // idk if this will work for actual unicode chars
+            // WE WILL SEE, FOR NOW THIS WORKS
+            build += (char)gdk_keyval_to_unicode(x.first);
+            build.append("] ");
+            build.append(x.second->getName());
+            Gtk::Label newLabel;
+            newLabel.set_label(build);
+            textContain.insert(newLabel, -1);
+        }
     }
 }
 
@@ -77,7 +80,7 @@ bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring ke
 }
 
 bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func, Glib::RefPtr<void> args) {
-    LOG("Creating %s, keybinding %s", names.at(names.size()-1).c_str(), keybind.c_str());
+    LOG("Creating %s, keybinding \"%s\"", names.at(names.size()-1).c_str(), keybind.c_str());
     
     // some error cases
     if(keybind.length() == 0) {
@@ -96,6 +99,17 @@ bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring ke
         // this usually means that less names were specified than were mapped to keybinds
         // thats fine, just offset the accessor
         offset = keybind.length() - names.size();
+    }
+    
+    // head initalization
+    if(head->empty()) { // oh the jokes we will say
+        LOG("Head empty! Placing CategoryAction with name \"%s\" for init", names.at(0).c_str());
+        // for this, we can just use zero 
+        // because this is initalized by the native code,
+        // not by any external sources
+        guint keyval = gdk_unicode_to_keyval(keybind[0]);
+        head->insert({keyval, Glib::RefPtr<Action>(new CategoryAction())});
+        head->at(keyval)->setName(names.at(0));
     }
     
     // actual adding
