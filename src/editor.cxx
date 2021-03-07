@@ -5,7 +5,7 @@
 #include <sstream>
 
 mainWindow::mainWindow() {
-    set_title("editorWindow");
+    set_title("IdET");
     auto kH = Gtk::EventControllerKey::create();
     kH->signal_key_pressed().connect(sigc::mem_fun(*this, &mainWindow::keyboardHandler), false);
     add_controller(kH);
@@ -64,6 +64,12 @@ mainWindow::mainWindow() {
 #define ACTION(x) Glib::RefPtr<Action>(new x)
 
     ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(&buffers, this)));
+    ctrlSpcView.add_action(NAME({"File", "Save"}), "fs", ACTION(SaveFile(&buffers)));
+    ctrlSpcView.add_action(NAME({"Swap"}), "s",
+        ACTION(SwapFileFactory(
+            sigc::mem_fun(*this, &mainWindow::swBuffer), sigc::mem_fun(buffers, &fileList::getAllNames))));
+
+    LOG("Rock and Roll, we're ready to start writing!");
 }
 
 void mainWindow::updateLineNumbers() {

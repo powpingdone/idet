@@ -26,8 +26,8 @@ class ppdTextBuffer {
     Glib::RefPtr<Gtk::TextBuffer> buffer() const { return selfbuffer; }
     Glib::RefPtr<Gio::File>       fileObj() const { return file; }
 
-    void save();
-    void reload();
+    bool save();
+    bool reload();
 
     private:
     Glib::ustring                 name, fileName;
@@ -43,12 +43,15 @@ class fileList {
     void                          deleteByName(Glib::ustring name);
     bool                          setCurrentBufByName(Glib::ustring name);
     Glib::RefPtr<Gtk::TextBuffer> getBufferByName(Glib::ustring name) const;
+    Glib::RefPtr<ppdTextBuffer>   getPPDTBByName(Glib::ustring name) const;
+    std::vector<Glib::ustring>    getAllNames() const;
 
-    inline bool nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
+    inline bool          nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
+    inline Glib::ustring getCurrBuffer() const { return currBuffer; }
 
     private:
-    std::vector<ppdTextBuffer> buffers;
-    Glib::ustring              currBuffer;
+    std::vector<Glib::RefPtr<ppdTextBuffer>> buffers;
+    Glib::ustring                            currBuffer;
 };
 
 #endif
