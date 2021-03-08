@@ -4,5 +4,5 @@ sanitycheckcpp*
 build.ninja
 .ninja*
 compile_commands.json
-builddir/*
+build*/*
 .cache/
