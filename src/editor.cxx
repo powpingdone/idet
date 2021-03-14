@@ -3,6 +3,7 @@
 #include "common.h"
 #include "text.h"
 #include <sstream>
+#include <string>
 
 mainWindow::mainWindow() {
     set_title("IdET");
@@ -77,7 +78,7 @@ void mainWindow::updateLineNumbers() {
     if(src->get_line_count() != lines) {
         lines = src->get_line_count();
         std::stringstream newNumbers;
-        for(int x = 1; x < lines + 1; x++) { newNumbers << x << std::endl; }
+        for(int x = 1; x < lines + 1; x++) { newNumbers << std::to_string(x) << std::endl; }
         buf->set_text(newNumbers.str());
     }
 }
@@ -99,10 +100,13 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
             LOG("Deactivating ctrlSpc.");
             ctrlSpcView.stop();
             ctrlSpc.set_visible(false);
+            sourceCode.grab_focus();
         } else {
             LOG("Activating ctrlSpc.");
             ctrlSpcView.start();
             ctrlSpc.set_visible(true);
+            // hack to get around focus issues when sourceCode is focused
+            sourceLines.grab_focus();
             ctrlSpcView.generate();
         }
         return true;
@@ -115,7 +119,8 @@ void mainWindow::constrain() {
     // clang-format off
     /*
      * "muh gui boilerplate"
-     * 
+     * You can close this function.
+     *
      * Roadmap:
      * tE, sL, sC are equivalent vars
      * tE == textEditor

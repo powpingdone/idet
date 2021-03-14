@@ -137,10 +137,12 @@ bool _ctrlSpcView::add_action(
 
             if((int)(pos)-offset >= 0) // set name if the offset is not negative
                 table->at(keyval)->setName(names.at(pos - offset));
-            else
+            else {
                 LOG("Keybinding \"%s\" at pos %d (aka '%c') does not have a corresponding default name,"
                     " despite needing one! Amt of default names given is %zu, using \"\" instead.",
                     keybind.c_str(), pos, keybind[pos], names.size());
+                table->at(keyval)->setName("");
+            }
         }
 
         if(pos + 1 == keybind.length() && table->find(keyval) == table->end()) { // if last binding and not in table
