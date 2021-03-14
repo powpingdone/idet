@@ -10,5 +10,6 @@ extern const std::chrono::time_point<std::chrono::system_clock> pt;
     printf("[%f] %s:L%d->%s()# " message "\n",                                                                      \
         std::chrono::duration<double>(std::chrono::system_clock::now() - pt).count(), __FILE__, __LINE__, __func__, \
         ##args)
+// current format: "[time] file:LLineNumber->function() message\n"
 
 #endif
