@@ -57,18 +57,41 @@ mainWindow::mainWindow() {
     // for now, use just a sample buffer
     buffers.append("new 1");
     sourceCode.set_buffer(buffers.getBufferByName("new 1"));
+    buffers.setCurrentBufByName("new 1");
     regenSCSignals();
 
     // and then actions
     // but first: macros
+    // clang-format off
 #define NAME(x...) std::vector<Glib::ustring>(x)
 #define ACTION(x) Glib::RefPtr<Action>(new x)
 
-    ctrlSpcView.add_action(NAME({"File", "Open"}), "fo", ACTION(OpenFile<mainWindow>(&buffers, this)));
-    ctrlSpcView.add_action(NAME({"File", "Save"}), "fs", ACTION(SaveFile(&buffers)));
-    ctrlSpcView.add_action(NAME({"Swap"}), "s",
+    ctrlSpcView.add_action(
+        NAME({"File", "Open"}),
+        "fo",
+        ACTION(OpenFile<mainWindow>(&buffers, this))
+    );
+    
+    ctrlSpcView.add_action(
+        NAME({"File", "Save"}),
+        "fs",
+        ACTION(SaveFile(&buffers))
+    );
+    
+    ctrlSpcView.add_action(
+        NAME({"File", "Close"}),
+        "fc",
+        ACTION(CloseFile(&buffers, sigc::mem_fun(*this, &mainWindow::swBuffer)))
+    );
+    
+    ctrlSpcView.add_action(
+        NAME({"Swap"}),
+        "s",
         ACTION(SwapFileFactory(
-            sigc::mem_fun(*this, &mainWindow::swBuffer), sigc::mem_fun(buffers, &fileList::getAllNames))));
+            sigc::mem_fun(*this, &mainWindow::swBuffer), sigc::mem_fun(buffers, &fileList::getAllNames)))
+    );
+
+    // clang-format on
 
     LOG("Rock and Roll, we're ready to start writing!");
 }

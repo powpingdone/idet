@@ -156,4 +156,19 @@ class SwapFile : public Action {
     sigc::signal<bool(Glib::ustring)> sig;
 };
 
+class CloseFile : public Action {
+    public:
+    CloseFile(fileList *lis, sigc::slot<bool(Glib::ustring)> func) {
+        active = true;
+        dir = false;
+        this->lis = lis;
+        sig.connect(func);
+    }
+    bool action();
+
+    private:
+    fileList *lis;
+    sigc::signal<bool(Glib::ustring)> sig;
+};
+
 #endif
