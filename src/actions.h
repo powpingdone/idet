@@ -90,6 +90,18 @@ template<typename T> class OpenFile : public Action {
                 files->append(name, file, true);
                 if(!windowPtr->swBuffer(name))
                     LOG("Failed to open file!");
+                else {
+                    // if there is a new * buffer then delete it
+                    if(files->getAllNames().size() == 2) {
+                        auto names = files->getAllNames();
+                        for (auto fname: names) {
+                            if(fname == "new 0" || fname == "new 1") {
+                                files->deleteByName(fname);
+                                break;
+                            }
+                        }
+                    }
+                }
                 break;
             }
             case Gtk::ResponseType::CANCEL:
