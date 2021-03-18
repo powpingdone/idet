@@ -34,7 +34,7 @@ bool fileList::setCurrentBufByName(Glib::ustring name) {
     LOG("Setting fileList's 'visible' buffer as %s", name.c_str());
     if(nameExists(name)) {
         currBuffer = name;
-        return true;
+        return swBuffer.emit(name);
     }
     LOG("Name does not exist! Not setting.");
     return false;

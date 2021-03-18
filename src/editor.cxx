@@ -55,10 +55,9 @@ mainWindow::mainWindow() {
     ctrlSpc.set_focus_on_click();
 
     // for now, use just a sample buffer
+    buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBuffer));
     buffers.append("new 1");
-    sourceCode.set_buffer(buffers.getBufferByName("new 1"));
     buffers.setCurrentBufByName("new 1");
-    regenSCSignals();
 
     // and then actions
     // but first: macros
@@ -69,7 +68,7 @@ mainWindow::mainWindow() {
     ctrlSpcView.add_action(
         NAME({"File", "Open"}),
         "fo",
-        ACTION(OpenFile<mainWindow>(&buffers, this))
+        ACTION(OpenFile(&buffers, sigc::mem_fun(*this, &mainWindow::selfReturn)))
     );
     
     ctrlSpcView.add_action(
@@ -81,14 +80,13 @@ mainWindow::mainWindow() {
     ctrlSpcView.add_action(
         NAME({"File", "Close"}),
         "fc",
-        ACTION(CloseFile(&buffers, sigc::mem_fun(*this, &mainWindow::swBuffer)))
+        ACTION(CloseFile(&buffers))
     );
     
     ctrlSpcView.add_action(
         NAME({"Swap"}),
         "s",
-        ACTION(SwapFileFactory(
-            sigc::mem_fun(*this, &mainWindow::swBuffer), sigc::mem_fun(buffers, &fileList::getAllNames)))
+        ACTION(SwapFileFactory(&buffers))
     );
 
     // clang-format on
@@ -107,14 +105,12 @@ void mainWindow::updateLineNumbers() {
 }
 
 bool mainWindow::swBuffer(Glib::ustring name) {
-    if(buffers.nameExists(name)) {
-        LOG("Swapping to buffer %s", name.c_str());
-        sourceCode.set_buffer(buffers.getBufferByName(name));
-        buffers.setCurrentBufByName(name);
-        regenSCSignals();
-        return true;
-    }
-    return false;
+    // NOTE: This function should be handled with a signal, 
+    // which should be done with the fileList object
+    LOG("Swapping to buffer %s", name.c_str());
+    sourceCode.set_buffer(buffers.getBufferByName(name));
+    regenSCSignals();
+    return true;
 }
 
 bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {

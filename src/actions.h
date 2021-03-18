@@ -47,79 +47,29 @@ class CategoryAction : public Action {
     }
 };
 
-/*
- * TEMPLATED ACTIONS
- * aka, usually actions that are forced to reference the editor window directly in some way
- * */
-
-// OpenFile: action to open a file
-// The main reason why this is templated is due to the high usage of GTK stuff
-template<typename T> class OpenFile : public Action {
-    public:
-    OpenFile(fileList *win, T *windowPtr) {
-        active = true;
-        dir = false;
-        this->files = win;
-        this->windowPtr = windowPtr;
-    }
-
-    protected:
-    bool action() {
-        auto dialog = new Gtk::FileChooserDialog("Open File", Gtk::FileChooser::Action::OPEN);
-        dialog->set_transient_for(*windowPtr); // why this is a template
-        dialog->set_modal();
-        dialog->signal_response().connect(sigc::bind(sigc::mem_fun(*this, &OpenFile<T>::signal), dialog));
-        dialog->add_button("_Ok", Gtk::ResponseType::OK);
-        dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
-        dialog->show();
-        return true;
-    }
-
-    void signal(int response, Gtk::FileChooserDialog *dialog) {
-        switch(response) {
-            case Gtk::ResponseType::OK: {
-                auto file = Glib::ustring(dialog->get_file()->get_path());
-                LOG("Opening file \"%s\"", file.c_str());
-
-                // but first, generate the name
-                std::string name, tmp(file);
-                int         x = tmp.length() - 1;
-                while(x >= 0 && tmp[x] != '/' && tmp[x] != '\\') x--;
-                name = tmp.substr((int)tmp.length() > x ? x + 1 : 0);
-
-                files->append(name, file, true);
-                if(!windowPtr->swBuffer(name))
-                    LOG("Failed to open file!");
-                else {
-                    // if there is a new * buffer then delete it
-                    if(files->getAllNames().size() == 2) {
-                        auto names = files->getAllNames();
-                        for (auto fname: names) {
-                            if(fname == "new 0" || fname == "new 1") {
-                                files->deleteByName(fname);
-                                break;
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-            case Gtk::ResponseType::CANCEL:
-            default: {
-                LOG("Cancelled!");
-            }
-        }
-        delete dialog;
-    }
-
-    private:
-    fileList *files;
-    T *       windowPtr; // hack to get around recursive definition
-};
 
 /*
  * REGULAR ACTIONS
  * */
+
+// OpenFile: action to open a file
+class OpenFile : public Action {
+    public:
+    OpenFile(fileList *win, sigc::slot<Gtk::Window*()> func) {
+        active = true;
+        dir = false;
+        this->files = win;
+        getMainWindow.connect(func);
+    }
+    bool action();
+
+    protected:
+    void signal(int, Gtk::FileChooserDialog*);
+
+    private:
+    fileList *files;
+    sigc::signal<Gtk::Window*()> getMainWindow;
+};
 
 // SaveFile: saves current file
 class SaveFile : public Action {
@@ -138,19 +88,19 @@ class SaveFile : public Action {
 // SwapFileFactory: Dir for switching active file
 class SwapFileFactory : public Action {
     public:
-    SwapFileFactory(sigc::slot<bool(Glib::ustring)> functor, sigc::slot<std::vector<Glib::ustring>()> getNames) {
+    SwapFileFactory(fileList *allbufs) {
         active = true;
         dir = true;
-        this->functor = functor;
-        this->getNames.connect(getNames);
+        this->allbufs = allbufs;
+        functor = sigc::mem_fun(*allbufs, &fileList::setCurrentBufByName);
         setSubKey(Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>>(
             new std::unordered_map<guint, Glib::RefPtr<Action>>()));
     }
     bool action();
 
     private:
-    sigc::signal<std::vector<Glib::ustring>()> getNames;
-    sigc::slot<bool(Glib::ustring)>            functor;
+    fileList *                      allbufs;
+    sigc::slot<bool(Glib::ustring)> functor;
 };
 
 // SwapFile: allows choosing of alternative files, subaction of SwapFileFactory
@@ -159,28 +109,26 @@ class SwapFile : public Action {
     SwapFile(sigc::slot<bool(Glib::ustring)> func, Glib::ustring name) {
         active = true;
         dir = false;
-        sig.connect(func);
+        changeName.connect(func);
         this->name = name;
     }
     bool action();
 
     private:
-    sigc::signal<bool(Glib::ustring)> sig;
+    sigc::signal<bool(Glib::ustring)> changeName;
 };
 
 class CloseFile : public Action {
     public:
-    CloseFile(fileList *lis, sigc::slot<bool(Glib::ustring)> func) {
+    CloseFile(fileList *lis) {
         active = true;
         dir = false;
         this->lis = lis;
-        sig.connect(func);
     }
     bool action();
 
     private:
     fileList *lis;
-    sigc::signal<bool(Glib::ustring)> sig;
 };
 
 #endif

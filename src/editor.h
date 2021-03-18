@@ -15,6 +15,7 @@ class mainWindow : public Gtk::Window {
     }
 
     bool swBuffer(Glib::ustring);
+    Gtk::Window * selfReturn() {return (Gtk::Window*)this;}
 
     protected:
     void updateLineNumbers(); // update textview sourceLines with new line numbers

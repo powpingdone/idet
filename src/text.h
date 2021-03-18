@@ -2,6 +2,7 @@
 #define TEXT_H
 
 #include "common.h"
+#include "glibmm/ustring.h"
 #include <gtkmm.h>
 
 // generic text buffer for handling text and files
@@ -46,12 +47,14 @@ class fileList {
     Glib::RefPtr<ppdTextBuffer>   getPPDTBByName(Glib::ustring name) const;
     std::vector<Glib::ustring>    getAllNames() const;
 
-    inline bool          nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
-    inline Glib::ustring getCurrBuffer() const { return currBuffer; }
+    sigc::signal<bool(Glib::ustring)>* signalSWBuffer() { return &swBuffer; }
+    inline bool   nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
+    Glib::ustring getCurrBuffer() const { return currBuffer; }
 
     private:
     std::vector<Glib::RefPtr<ppdTextBuffer>> buffers;
     Glib::ustring                            currBuffer;
+    sigc::signal<bool(Glib::ustring)>        swBuffer;
 };
 
 #endif
