@@ -97,6 +97,7 @@ mainWindow::mainWindow() {
 void mainWindow::updateLineNumbers() {
     auto buf = sourceLines.get_buffer(), src = sourceCode.get_buffer();
     if(src->get_line_count() != lines) {
+        DLOG("Updating line numbers");
         lines = src->get_line_count();
         std::stringstream newNumbers;
         for(int x = 1; x < lines + 1; x++) { newNumbers << std::to_string(x) << std::endl; }
@@ -105,7 +106,7 @@ void mainWindow::updateLineNumbers() {
 }
 
 bool mainWindow::swBuffer(Glib::ustring name) {
-    // NOTE: This function should be handled with a signal, 
+    // NOTE: This function should be handled with a signal,
     // which should be done with the fileList object
     LOG("Swapping to buffer %s", name.c_str());
     sourceCode.set_buffer(buffers.getBufferByName(name));

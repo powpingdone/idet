@@ -25,12 +25,12 @@ bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierTyp
         return false;
 
     if(treeptr->find(keyval) != treeptr->end()) { // if there is a valid key in the treeptr
-        LOG("Caught action %d, ie '%c', which is in tree.", keyval, gdk_keyval_to_unicode(keyval));
+        DLOG("Caught action %d, ie '%c', which is in tree.", keyval, gdk_keyval_to_unicode(keyval));
         if(treeptr->at(keyval)->activateable())
             treeptr->at(keyval)->activate();
 
         if(treeptr->at(keyval)->category()) { // set up next tree
-            LOG("Generating next tree.");
+            DLOG("Generating next tree.");
             treeptr = treeptr->at(keyval)->subKey();
         } else { // deactivate
             LOG("Hit endof tree, cleaning up");
@@ -50,7 +50,7 @@ void _ctrlSpcView::generate() {
 
     if(active) {
         if(!head) {
-            LOG("Somehow attempting to generate with a NULL head! Not generating!");
+            DLOG("Somehow attempting to generate with a NULL head! Not generating!");
             return;
         }
 
@@ -67,6 +67,8 @@ void _ctrlSpcView::generate() {
             build += (char)gdk_keyval_to_unicode(x.first);
             build.append("] ");
             build.append(x.second->getName());
+            DLOG("Label \"%s\" created", build.c_str());
+
             Gtk::Label newLabel;
             newLabel.set_label(build);
             textContain.insert(newLabel, -1);
@@ -80,16 +82,16 @@ bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring ke
 
 bool _ctrlSpcView::add_action(
     std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func, Glib::RefPtr<void> args) {
-    LOG("Creating %s, keybinding \"%s\"", names.at(names.size() - 1).c_str(), keybind.c_str());
+    DLOG("Creating %s, keybinding \"%s\"", names.at(names.size() - 1).c_str(), keybind.c_str());
 
     // some error cases
     if(keybind.length() == 0) {
-        LOG("Keybinding length is 0, which is impossible to make bindings for! Returning false.");
+        DLOG("Keybinding length is 0, which is impossible to make bindings for! Returning false.");
         return false;
     }
 
     if(keybind.length() < names.size()) {
-        LOG("Keybinding size is less than names specified, returning false.");
+        DLOG("Keybinding size is less than names specified, returning false.");
         return false;
     }
 
@@ -103,7 +105,7 @@ bool _ctrlSpcView::add_action(
 
     // head initalization
     if(head->empty()) { // oh the jokes we will say
-        LOG("Head empty! Placing CategoryAction with name \"%s\" for init", names.at(0).c_str());
+        DLOG("Head empty! Placing CategoryAction with name \"%s\" for init", names.at(0).c_str());
         // for this, we can just use zero
         // because this is initalized by the native code,
         // not by any external sources
@@ -122,8 +124,8 @@ bool _ctrlSpcView::add_action(
                 table = table->at(keyval)->subKey();
                 continue;
             } else { // it is activateable
-                LOG("Keybinding \"%s\" at pos %d (aka '%c') already has activateable binding."
-                    " Returning false.",
+                DLOG("Keybinding \"%s\" at pos %d (aka '%c') already has activateable binding."
+                     " Returning false.",
                     keybind.c_str(), pos, keybind[pos]);
                 return false;
             }
@@ -138,16 +140,16 @@ bool _ctrlSpcView::add_action(
             if((int)(pos)-offset >= 0) // set name if the offset is not negative
                 table->at(keyval)->setName(names.at(pos - offset));
             else {
-                LOG("Keybinding \"%s\" at pos %d (aka '%c') does not have a corresponding default name,"
-                    " despite needing one! Amt of default names given is %zu, using \"\" instead.",
+                DLOG("Keybinding \"%s\" at pos %d (aka '%c') does not have a corresponding default name,"
+                     " despite needing one! Amt of default names given is %zu, using \"\" instead.",
                     keybind.c_str(), pos, keybind[pos], names.size());
                 table->at(keyval)->setName("");
             }
         }
 
         if(pos + 1 == keybind.length() && table->find(keyval) == table->end()) { // if last binding and not in table
-            LOG("After iterating through keybinding \"%s\", "
-                "there are no more values to attempt to bind to. Returning false.",
+            DLOG("After iterating through keybinding \"%s\", "
+                 "there are no more values to attempt to bind to. Returning false.",
                 keybind.c_str());
             return false;
         }

@@ -47,7 +47,6 @@ class CategoryAction : public Action {
     }
 };
 
-
 /*
  * REGULAR ACTIONS
  * */
@@ -55,7 +54,7 @@ class CategoryAction : public Action {
 // OpenFile: action to open a file
 class OpenFile : public Action {
     public:
-    OpenFile(fileList *win, sigc::slot<Gtk::Window*()> func) {
+    OpenFile(fileList *win, sigc::slot<Gtk::Window *()> func) {
         active = true;
         dir = false;
         this->files = win;
@@ -64,11 +63,11 @@ class OpenFile : public Action {
     bool action();
 
     protected:
-    void signal(int, Gtk::FileChooserDialog*);
+    void signal(int, Gtk::FileChooserDialog *);
 
     private:
-    fileList *files;
-    sigc::signal<Gtk::Window*()> getMainWindow;
+    fileList *                    files;
+    sigc::signal<Gtk::Window *()> getMainWindow;
 };
 
 // SaveFile: saves current file

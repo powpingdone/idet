@@ -9,6 +9,7 @@ bool OpenFile::action() {
     dialog->add_button("_Ok", Gtk::ResponseType::OK);
     dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
     dialog->show();
+    DLOG("Opening FileOpenDialog");
     return true;
 }
 
@@ -19,10 +20,13 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
             LOG("Opening file \"%s\"", file.c_str());
 
             // but first, generate the name
+            // basically, work backwards from the end
+            // to the first / or \ and then use the offset
             std::string name, tmp(file);
             int         x = tmp.length() - 1;
             while(x >= 0 && tmp[x] != '/' && tmp[x] != '\\') x--;
             name = tmp.substr((int)tmp.length() > x ? x + 1 : 0);
+            DLOG("Filename generated: \"%s\"", name.c_str());
 
             files->append(name, file, true);
             if(!files->setCurrentBufByName(name))
@@ -94,6 +98,7 @@ bool CloseFile::action() {
     auto          buffers = lis->getAllNames();
     LOG("Closing file %s", file.c_str());
     if(buffers.size() == 1) {
+        DLOG("Opening blank buffer in place");
         if(buffers.at(0) == "new 1") {
             lis->append("new 0");
             lis->setCurrentBufByName("new 0");
@@ -101,8 +106,10 @@ bool CloseFile::action() {
             lis->append("new 1");
             lis->setCurrentBufByName("new 1");
         }
+        DLOG("\"%s\" is new blank buffer", lis->getCurrBuffer().c_str());
     } else {
         lis->setCurrentBufByName(buffers.at(0) == file ? buffers.at(1) : buffers.at(0));
+        DLOG("Using \"%s\" as buffer after closing other buffer", lis->getCurrBuffer().c_str());
     }
     lis->deleteByName(file);
     return true;

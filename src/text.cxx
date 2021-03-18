@@ -1,48 +1,51 @@
 #include "text.h"
-
 #include <gtkmm.h>
 
 // TODO: ADD ASYNC SUPPORT
 // TODO: FILE PERMS
 
 void fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
-    LOG("Loading new buffer \"%s\"", name.c_str());
+    DLOG("Loading new buffer \"%s\"", name.c_str());
     auto x = Glib::RefPtr<ppdTextBuffer>(new ppdTextBuffer(name, file, editable));
     if(file != "") {
         x->reload();
     }
-    buffers.push_back(std::move(x));
+    buffers.push_back(x);
 }
 
 Glib::RefPtr<Gtk::TextBuffer> fileList::getBufferByName(Glib::ustring name) const {
-    for(auto x: buffers) {
-        if(x->getName() == name)
-            return x->buffer();
-    }
-    return nullptr;
+    auto potentBuf = getPPDTBByName(name);
+    return potentBuf ? potentBuf->buffer() : nullptr;
 }
 
 Glib::RefPtr<ppdTextBuffer> fileList::getPPDTBByName(Glib::ustring name) const {
+    DLOG("Searching for \"%s\"...", name.c_str());
     for(auto x: buffers) {
-        if(x->getName() == name)
+        if(x->getName() == name) {
+            DLOG("Found matching buffer.");
             return x;
+        }
     }
+    DLOG("No matching buffer found");
     return nullptr;
 }
 
 bool fileList::setCurrentBufByName(Glib::ustring name) {
-    LOG("Setting fileList's 'visible' buffer as %s", name.c_str());
+    DLOG("Setting fileList's 'visible' buffer as %s", name.c_str());
     if(nameExists(name)) {
         currBuffer = name;
         return swBuffer.emit(name);
     }
-    LOG("Name does not exist! Not setting.");
+    DLOG("Name does not exist! Not setting.");
     return false;
 }
 
 void fileList::deleteByName(Glib::ustring name) {
+    // NOTE: this does not account for duplicates
+    DLOG("Deleting buffer by name \"%s\"", name.c_str());
     for(auto x = buffers.begin(); x != buffers.end(); x++) {
         if(x->get()->getName() == name) {
+            DLOG("Found buffer.");
             buffers.erase(x);
             return;
         }
@@ -60,7 +63,7 @@ bool ppdTextBuffer::save() {
         LOG("Buffer \"%s\" does not have a defined file! Not saving.", getName().c_str());
         return false;
     }
-    LOG("Saving file \"%s\"...", this->name.c_str());
+    DLOG("Saving file \"%s\"...", this->name.c_str());
     auto overwriteBuffer = fileObj()->replace();
     overwriteBuffer->write(buffer()->get_text());
     overwriteBuffer->close();
@@ -73,10 +76,10 @@ bool ppdTextBuffer::reload() {
         LOG("Buffer \"%s\" does not have a defined file! Not reloading.", getName().c_str());
         return false;
     }
-    LOG("Reloading file \"%s\"...", this->name.c_str());
     char* contents;
     gsize amt;
     fileObj()->load_contents(contents, amt);
+    DLOG("Reloading file \"%s\" with amt %lu...", this->name.c_str(), amt);
     buffer()->set_text(contents, contents + amt);
     g_free(contents);
     return true;
