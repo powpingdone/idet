@@ -35,10 +35,10 @@ BraceWrapping:
   AfterObjCDeclaration: false
   AfterStruct: false
   AfterUnion: false
-  BeforeCatch: false
-  BeforeElse: false
-  BeforeLambdaBody: false
-  BeforeWhile: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
   IndentBraces: false
   SplitEmptyFunction: true
   SplitEmptyNamespace: true
@@ -81,7 +81,7 @@ IncludeCategories:
   SortPriority: 0
 IncludeIsMainRegex: (Test)?$
 IncludeIsMainSourceRegex: ''
-IndentCaseBlocks: false
+IndentCaseBlocks: true
 IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock
 IndentGotoLabels: true

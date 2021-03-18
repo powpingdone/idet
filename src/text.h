@@ -48,8 +48,8 @@ class fileList {
     std::vector<Glib::ustring>    getAllNames() const;
 
     sigc::signal<bool(Glib::ustring)>* signalSWBuffer() { return &swBuffer; }
-    inline bool   nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
-    Glib::ustring getCurrBuffer() const { return currBuffer; }
+    inline bool                        nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
+    Glib::ustring                      getCurrBuffer() const { return currBuffer; }
 
     private:
     std::vector<Glib::RefPtr<ppdTextBuffer>> buffers;

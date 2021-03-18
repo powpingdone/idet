@@ -15,40 +15,42 @@ bool OpenFile::action() {
 
 void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
     switch(response) {
-        case Gtk::ResponseType::OK: {
-            auto file = Glib::ustring(dialog->get_file()->get_path());
-            LOG("Opening file \"%s\"", file.c_str());
+        case Gtk::ResponseType::OK:
+            {
+                auto file = Glib::ustring(dialog->get_file()->get_path());
+                LOG("Opening file \"%s\"", file.c_str());
 
-            // but first, generate the name
-            // basically, work backwards from the end
-            // to the first / or \ and then use the offset
-            std::string name, tmp(file);
-            int         x = tmp.length() - 1;
-            while(x >= 0 && tmp[x] != '/' && tmp[x] != '\\') x--;
-            name = tmp.substr((int)tmp.length() > x ? x + 1 : 0);
-            DLOG("Filename generated: \"%s\"", name.c_str());
+                // but first, generate the name
+                // basically, work backwards from the end
+                // to the first / or \ and then use the offset
+                std::string name, tmp(file);
+                int         x = tmp.length() - 1;
+                while(x >= 0 && tmp[x] != '/' && tmp[x] != '\\') x--;
+                name = tmp.substr((int)tmp.length() > x ? x + 1 : 0);
+                DLOG("Filename generated: \"%s\"", name.c_str());
 
-            files->append(name, file, true);
-            if(!files->setCurrentBufByName(name))
-                LOG("Failed to open file!");
-            else {
-                // if there is a new * buffer then delete it
-                if(files->getAllNames().size() == 2) {
-                    auto names = files->getAllNames();
-                    for(auto fname: names) {
-                        if(fname == "new 0" || fname == "new 1") {
-                            files->deleteByName(fname);
-                            break;
+                files->append(name, file, true);
+                if(!files->setCurrentBufByName(name))
+                    LOG("Failed to open file!");
+                else {
+                    // if there is a new * buffer then delete it
+                    if(files->getAllNames().size() == 2) {
+                        auto names = files->getAllNames();
+                        for(auto fname: names) {
+                            if(fname == "new 0" || fname == "new 1") {
+                                files->deleteByName(fname);
+                                break;
+                            }
                         }
                     }
                 }
+                break;
             }
-            break;
-        }
         case Gtk::ResponseType::CANCEL:
-        default: {
-            LOG("Cancelled!");
-        }
+        default:
+            {
+                LOG("Cancelled!");
+            }
     }
     delete dialog;
 }
