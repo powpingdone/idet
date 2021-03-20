@@ -15,6 +15,6 @@ extern bool                                                     enableDebug;
 
 #define DLOG(message, args...) \
     if(enableDebug)            \
-    LOG(message, ##args)
+    LOG("[DEBUG] " message, ##args)
 
 #endif
