@@ -56,7 +56,7 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
 }
 
 bool SaveFile::action() {
-    return lis->getPPDTBByName(lis->getCurrBuffer())->save();
+    return files->getPPDTBByName(files->getCurrBuffer())->save();
 }
 
 bool SwapFile::action() {
@@ -96,23 +96,23 @@ bool SwapFileFactory::action() {
 }
 
 bool CloseFile::action() {
-    Glib::ustring file = lis->getCurrBuffer();
-    auto          buffers = lis->getAllNames();
+    Glib::ustring file = files->getCurrBuffer();
+    auto          buffers = files->getAllNames();
     LOG("Closing file %s", file.c_str());
     if(buffers.size() == 1) {
         DLOG("Opening blank buffer in place");
         if(buffers.at(0) == "new 1") {
-            lis->append("new 0");
-            lis->setCurrentBufByName("new 0");
+            files->append("new 0");
+            files->setCurrentBufByName("new 0");
         } else {
-            lis->append("new 1");
-            lis->setCurrentBufByName("new 1");
+            files->append("new 1");
+            files->setCurrentBufByName("new 1");
         }
-        DLOG("\"%s\" is new blank buffer", lis->getCurrBuffer().c_str());
+        DLOG("\"%s\" is new blank buffer", files->getCurrBuffer().c_str());
     } else {
-        lis->setCurrentBufByName(buffers.at(0) == file ? buffers.at(1) : buffers.at(0));
-        DLOG("Using \"%s\" as buffer after closing other buffer", lis->getCurrBuffer().c_str());
+        files->setCurrentBufByName(buffers.at(0) == file ? buffers.at(1) : buffers.at(0));
+        DLOG("Using \"%s\" as buffer after closing other buffer", files->getCurrBuffer().c_str());
     }
-    lis->deleteByName(file);
+    files->deleteByName(file);
     return true;
 }

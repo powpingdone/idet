@@ -15,5 +15,5 @@ int main(int argc, char* argv[]) {
     LOG("Idet, Activate!");
     DLOG("### DEBUGGING ENABLED ###");
     auto app = Gtk::Application::create("xyz.powpingdone.idet");
-    return app->make_window_and_run<mainWindow>(1, argv);
+    return app->make_window_and_run<mainWindow>(1, argv); //using 1 to ignore args 
 }

@@ -73,15 +73,15 @@ class OpenFile : public Action {
 // SaveFile: saves current file
 class SaveFile : public Action {
     public:
-    SaveFile(fileList *lis) {
+    SaveFile(fileList *files) {
         active = true;
         dir = false;
-        this->lis = lis;
+        this->files = files;
     }
     bool action();
 
     private:
-    fileList *lis;
+    fileList *files;
 };
 
 // SwapFileFactory: Dir for switching active file
@@ -119,15 +119,15 @@ class SwapFile : public Action {
 
 class CloseFile : public Action {
     public:
-    CloseFile(fileList *lis) {
+    CloseFile(fileList *files) {
         active = true;
         dir = false;
-        this->lis = lis;
+        this->files = files;
     }
     bool action();
 
     private:
-    fileList *lis;
+    fileList *files;
 };
 
 #endif
