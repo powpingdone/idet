@@ -66,6 +66,12 @@ mainWindow::mainWindow() {
 #define ACTION(x) Glib::RefPtr<Action>(new x)
 
     ctrlSpcView.add_action(
+        NAME({"File", "New"}),
+        "fn",
+        ACTION(NewFile(&buffers, sigc::mem_fun(*this, &mainWindow::textPrompt)))
+    );
+
+    ctrlSpcView.add_action(
         NAME({"File", "Open"}),
         "fo",
         ACTION(OpenFile(&buffers, sigc::mem_fun(*this, &mainWindow::selfReturn)))
@@ -119,17 +125,23 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
         if(ctrlSpcView.isActive()) {
             LOG("Deactivating ctrlSpc.");
             ctrlSpcView.stop();
-            ctrlSpc.set_visible(false);
-            sourceCode.grab_focus();
+            if(ctrlSpcView.isPMode()) {
+                ctrlSpcView.promptModeOff();
+                pmodeCallback.clear();
+                // please dont leak memory
+                free(userCallslot);
+                userCallslot = nullptr;
+            }
+            focusTextEditor();
         } else {
             LOG("Activating ctrlSpc.");
             ctrlSpcView.start();
-            ctrlSpc.set_visible(true);
-            // hack to get around focus issues when sourceCode is focused
-            sourceLines.grab_focus();
+            focusCtrlSpc();
             ctrlSpcView.generate();
         }
         return true;
+    } else if(ctrlSpcView.isPMode() && keyval == GDK_KEY_Return) { // done prompting the user
+        pmodeCallback.emit();
     }
     // if the previous does not happen, try checking here
     return ctrlSpcView.keyboardHandler(keyval, keycode, state);

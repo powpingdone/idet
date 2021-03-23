@@ -20,8 +20,28 @@ _ctrlSpcView::_ctrlSpcView() {
     ctrlSpcSelect.set_name("ctrlSpcSelect");
 }
 
+void _ctrlSpcView::useCustomTree(std::vector<Glib::RefPtr<Gtk::Widget>> widgets) {
+    if(!pmode) {
+        DLOG("PMODE is not on, not ingesting widgets.");
+        return;
+    }
+    extermChildren();
+    for(auto widget: widgets) { textContain.insert(*widget, -1); }
+}
+
+std::vector<Gtk::Widget*> _ctrlSpcView::giveCustomTree() {
+    std::vector<Gtk::Widget*> ret;
+    if(!pmode) {
+        DLOG("PMODE is not on, not giving widgets out.");
+        return ret;
+    }
+    for(int index = 0; textContain.get_child_at_index(index); index++)
+        ret.push_back(textContain.get_child_at_index(index)->get_child());
+    return ret;
+}
+
 bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
-    if(!active)
+    if(!active || pmode)
         return false;
 
     if(treeptr->find(keyval) != treeptr->end()) { // if there is a valid key in the treeptr
@@ -29,33 +49,50 @@ bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierTyp
         if(treeptr->at(keyval)->activateable())
             treeptr->at(keyval)->activate();
 
-        if(treeptr->at(keyval)->category()) { // set up next tree
-            DLOG("Generating next tree.");
-            treeptr = treeptr->at(keyval)->subKey();
-        } else { // deactivate
-            LOG("Hit endof tree, cleaning up");
-            this->stop();
-            treeptr = nullptr;
+        if(!swapNextTree(keyval)) { // set up next tree
+            if(pmode) { // promptmode
+                DLOG("Entered Prompt mode during tree traversal, most likely due to action");
+                this->cachedKeyval = keyval;
+                return true;
+            } else { // deactivate
+                LOG("Hit endof tree, cleaning up");
+                this->stop();
+            }
         }
-        this->generate();
         return true;
     }
     return false;
 }
 
-void _ctrlSpcView::generate() {
-    while(textContain.get_child_at_index(0)) { // while there are children
-        textContain.remove(*(textContain.get_child_at_index(0)->get_child())); // remove them
-    } // woow gtk how insensitive of you
+bool _ctrlSpcView::swapNextTree() {
+    return swapNextTree(this->cachedKeyval);
+}
 
-    if(active) {
+bool _ctrlSpcView::swapNextTree(guint keyval) {
+    if(treeptr->at(keyval)->category() && !pmode) {
+        DLOG("Setting next tree.");
+        treeptr = treeptr->at(keyval)->subKey();
+        this->generate();
+        return true;
+    }
+    DLOG("Did not find category to swap to. PMODE is %s.", pmode ? "on" : "off");
+    return false;
+}
+
+void _ctrlSpcView::generate() {
+    extermChildren();
+
+    if(active && !pmode) {
         if(!head) {
             DLOG("Somehow attempting to generate with a NULL head! Not generating!");
             return;
         }
+        DLOG("(re)generating!");
 
-        if(!treeptr) // if keyboardHandler hasnt activated yet
+        if(!treeptr) { // if keyboardHandler hasnt activated yet
+            DLOG("Using head.");
             treeptr = head;
+        }
         auto node = *treeptr;
 
         for(auto x: node) {

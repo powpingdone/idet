@@ -1,6 +1,7 @@
 idet_sources = [
   'main.cxx',
   'editor.cxx',
+  'inputacts.cxx',
   'editor.h',
   'ctrlspc.cxx',
   'ctrlspc.h',

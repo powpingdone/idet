@@ -1,9 +1,24 @@
 #include "actions.h"
 #include <gtkmm.h>
 
+bool NewFile::action() {
+    prompt.emit("New Filename:", &signalSlot);
+    return true;
+}
+
+void NewFile::signal(Glib::ustring file) {
+    Glib::ustring name(file);
+    auto          x = name.end();
+    // if this is a multi directory name, work backwards to the last slash
+    while(x != name.begin() && (*(x.base()) != '\\' || *(x.base()) != '/')) x--;
+    name = std::string(x, name.end());
+    files->append(name, file, true);
+    files->setCurrentBufByName(name);
+}
+
 bool OpenFile::action() {
     auto dialog = new Gtk::FileChooserDialog("Open File", Gtk::FileChooser::Action::OPEN);
-    dialog->set_transient_for(*getMainWindow.emit());
+    dialog->set_transient_for(*(getMainWindow.emit()));
     dialog->set_modal();
     dialog->signal_response().connect(sigc::bind(sigc::mem_fun(*this, &OpenFile::signal), dialog));
     dialog->add_button("_Ok", Gtk::ResponseType::OK);

@@ -51,6 +51,25 @@ class CategoryAction : public Action {
  * REGULAR ACTIONS
  * */
 
+// NewFile: action to create a new buffer
+class NewFile : public Action {
+    public:
+    NewFile(fileList *files, sigc::slot<void(Glib::ustring, sigc::slot<void(Glib::ustring)> *)> prompt) {
+        active = true;
+        dir = false;
+        this->files = files;
+        this->signalSlot = sigc::mem_fun(*this, &NewFile::signal);
+        this->prompt.connect(prompt);
+    }
+    bool action();
+    void signal(Glib::ustring);
+
+    private:
+    fileList *                                                           files;
+    sigc::signal<void(Glib::ustring, sigc::slot<void(Glib::ustring)> *)> prompt;
+    sigc::slot<void(Glib::ustring)>                                      signalSlot;
+};
+
 // OpenFile: action to open a file
 class OpenFile : public Action {
     public:
