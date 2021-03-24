@@ -2,7 +2,7 @@
 #include "actions.h"
 #include "common.h"
 
-_ctrlSpcView::_ctrlSpcView() {
+ctrlSpcHandler::ctrlSpcHandler() {
     // setup flow container to use proper settings
     textContain.set_column_spacing(12);
     textContain.set_row_spacing(1);
@@ -20,7 +20,7 @@ _ctrlSpcView::_ctrlSpcView() {
     ctrlSpcSelect.set_name("ctrlSpcSelect");
 }
 
-void _ctrlSpcView::useCustomTree(std::vector<Glib::RefPtr<Gtk::Widget>> widgets) {
+void ctrlSpcHandler::useCustomTree(std::vector<Glib::RefPtr<Gtk::Widget>> widgets) {
     if(!pmode) {
         DLOG("PMODE is not on, not ingesting widgets.");
         return;
@@ -29,7 +29,7 @@ void _ctrlSpcView::useCustomTree(std::vector<Glib::RefPtr<Gtk::Widget>> widgets)
     for(auto widget: widgets) { textContain.insert(*widget, -1); }
 }
 
-std::vector<Gtk::Widget*> _ctrlSpcView::giveCustomTree() {
+std::vector<Gtk::Widget*> ctrlSpcHandler::giveCustomTree() {
     std::vector<Gtk::Widget*> ret;
     if(!pmode) {
         DLOG("PMODE is not on, not giving widgets out.");
@@ -40,7 +40,7 @@ std::vector<Gtk::Widget*> _ctrlSpcView::giveCustomTree() {
     return ret;
 }
 
-bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
+bool ctrlSpcHandler::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
     if(!active || pmode)
         return false;
 
@@ -64,11 +64,11 @@ bool _ctrlSpcView::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierTyp
     return false;
 }
 
-bool _ctrlSpcView::swapNextTree() {
+bool ctrlSpcHandler::swapNextTree() {
     return swapNextTree(this->cachedKeyval);
 }
 
-bool _ctrlSpcView::swapNextTree(guint keyval) {
+bool ctrlSpcHandler::swapNextTree(guint keyval) {
     if(treeptr->at(keyval)->category() && !pmode) {
         DLOG("Setting next tree.");
         treeptr = treeptr->at(keyval)->subKey();
@@ -79,7 +79,7 @@ bool _ctrlSpcView::swapNextTree(guint keyval) {
     return false;
 }
 
-void _ctrlSpcView::generate() {
+void ctrlSpcHandler::generate() {
     extermChildren();
 
     if(active && !pmode) {
@@ -113,11 +113,11 @@ void _ctrlSpcView::generate() {
     }
 }
 
-bool _ctrlSpcView::add_action(std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func) {
+bool ctrlSpcHandler::add_action(std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func) {
     return add_action(names, keybind, func, nullptr);
 }
 
-bool _ctrlSpcView::add_action(
+bool ctrlSpcHandler::add_action(
     std::vector<Glib::ustring> names, Glib::ustring keybind, Glib::RefPtr<Action> func, Glib::RefPtr<void> args) {
     DLOG("Creating %s, keybinding \"%s\"", names.at(names.size() - 1).c_str(), keybind.c_str());
 
@@ -138,6 +138,7 @@ bool _ctrlSpcView::add_action(
         // this usually means that less names were specified than were mapped to keybinds
         // thats fine, just offset the accessor
         offset = keybind.length() - names.size();
+        DLOG("Less names used than keybinds found, offset is %d for keybind len %lu", offset, keybind.length());
     }
 
     // head initalization

@@ -36,15 +36,17 @@ class mainWindow : public Gtk::Window {
     void generateCtrlSpc(); // signal handler for ctrlspc
 
     private:
-    Gtk::Grid                           masterGrid; // contains rest of boxes
-    Gtk::Grid                           textEditor; // contains textviews relating to actual code editing
-    Gtk::ScrolledWindow                 sourceHolder; // scrolls through source code
-    Gtk::TextView                       sourceCode; // actual code
-    Gtk::TextView                       sourceLines; // line numbers
-    _ctrlSpcView                        ctrlSpcView; // handler class for ctrlspc
-    Gtk::Box                            ctrlSpc; // ctrlspc container
-    int                                 lines = -1; // used by updateLineNumbers to check if line numbers changed
-    fileList                            buffers; // all text buffers
+    Gtk::Grid           masterGrid; // contains rest of boxes
+    Gtk::Grid           textEditor; // contains textviews relating to actual code editing
+    Gtk::ScrolledWindow sourceHolder; // scrolls through source code
+    Gtk::TextView       sourceCode; // actual code
+    Gtk::TextView       sourceLines; // line numbers
+    Gtk::Box            ctrlSpc; // ctrlspc container
+
+    ctrlSpcHandler ctrlSpcView; // handler class for ctrlspc
+    int            lines = -1; // used by updateLineNumbers to check if line numbers changed
+    fileList       buffers; // all text buffers
+
     Glib::RefPtr<Gtk::ConstraintLayout> eSrcLayout
         = Gtk::ConstraintLayout::create(); // specific layout for line numbers + srccode
 

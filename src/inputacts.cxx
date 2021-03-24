@@ -23,7 +23,7 @@ void mainWindow::textPromptSignal() {
         sig.connect(*functor);
         auto widgets = ctrlSpcView.giveCustomTree();
         // hack to get around casting problems
-        // Gtk::Widget -> GtkWidget* -> GtkEntry* -> Gtk::Entry*
+        // Gtk::Widget* -> GtkWidget* -> GtkEntry* -> Gtk::Entry*
         // if there is an official way to do this, I wouldnt know lmao
         Gtk::Entry *entry = Glib::wrap(GTK_ENTRY(widgets.at(1)->gobj()));
         DLOG("Got %s from buffer", entry->get_buffer()->get_text().c_str());

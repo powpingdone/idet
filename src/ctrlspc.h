@@ -4,9 +4,9 @@
 #include "actions.h"
 #include <gtkmm.h>
 
-class _ctrlSpcView {
+class ctrlSpcHandler {
     public:
-    _ctrlSpcView();
+    ctrlSpcHandler();
     bool add_action(std::vector<Glib::ustring>, Glib::ustring, Glib::RefPtr<Action>, Glib::RefPtr<void>);
     bool add_action(std::vector<Glib::ustring>, Glib::ustring, Glib::RefPtr<Action>);
     void generate(); // generate list values
