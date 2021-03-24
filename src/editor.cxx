@@ -55,9 +55,9 @@ mainWindow::mainWindow() {
     ctrlSpc.set_focus_on_click();
 
     // for now, use just a sample buffer
-    buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBuffer));
+    buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
     buffers.append("new 1");
-    buffers.setCurrentBufByName("new 1");
+    buffers.setCurrentBuf(0);
 
     // and then actions
     // but first: macros
@@ -111,11 +111,20 @@ void mainWindow::updateLineNumbers() {
     }
 }
 
-bool mainWindow::swBuffer(Glib::ustring name) {
+bool mainWindow::swBufferByID(size_t id) {
     // NOTE: This function should be handled with a signal,
     // which should be done with the fileList object
-    LOG("Swapping to buffer %s", name.c_str());
-    sourceCode.set_buffer(buffers.getBufferByName(name));
+    DLOG("Swapping to buffer ID %lu", id);
+    return swBuffer(buffers.getBuffer(id));
+}
+
+bool mainWindow::swBuffer(Glib::RefPtr<Gtk::TextBuffer> buf) {
+    if(buf == nullptr) {
+        LOG("No buffer found to switch to.");
+        return false;
+    }
+
+    sourceCode.set_buffer(buf);
     regenSCSignals();
     return true;
 }

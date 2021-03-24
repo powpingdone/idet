@@ -39,21 +39,35 @@ class ppdTextBuffer {
 // container of files
 class fileList {
     public:
-    void                          append(Glib::ustring name, Glib::ustring file = "", bool editable = "");
-    void                          deleteByName(Glib::ustring name);
-    bool                          setCurrentBufByName(Glib::ustring name);
-    Glib::RefPtr<Gtk::TextBuffer> getBufferByName(Glib::ustring name) const;
-    Glib::RefPtr<ppdTextBuffer>   getPPDTBByName(Glib::ustring name) const;
-    std::vector<Glib::ustring>    getAllNames() const;
+    size_t append(Glib::ustring name, Glib::ustring file = "", bool editable = "");
 
-    sigc::signal<bool(Glib::ustring)>* signalSWBuffer() { return &swBuffer; }
-    bool                               nameExists(Glib::ustring name) const { return getBufferByName(name) != nullptr; }
-    Glib::ustring                      getCurrBuffer() const { return currBuffer; }
+    void                          deleteBufAt(size_t);
+    bool                          setCurrentBuf(size_t);
+    Glib::RefPtr<Gtk::TextBuffer> getBuffer(size_t) const;
+    Glib::RefPtr<ppdTextBuffer>   getPPDTB(size_t) const;
+    std::vector<size_t>    getAllIDs() const;
+
+    sigc::signal<bool(size_t)>* signalSWBuffer() { return &swBufferID; }
+    bool                        IDExists(size_t id) const { return getBuffer(id) != nullptr; }
+
+    size_t getCurrBufferID() const {
+        for(auto x: buffers)
+            if(x.second->buffer() == currBuffer->buffer())
+                return x.first;
+        // unreachable
+        return 0;
+    }
+
+    std::vector<Glib::ustring> getAllNames() const;
+    Glib::ustring              getCurrBufferName() const { return currBuffer->getName(); }
+
+    protected:
+    size_t findLowestId();
 
     private:
-    std::vector<Glib::RefPtr<ppdTextBuffer>> buffers;
-    Glib::ustring                            currBuffer;
-    sigc::signal<bool(Glib::ustring)>        swBuffer;
+    std::unordered_map<size_t, Glib::RefPtr<ppdTextBuffer>> buffers;
+    Glib::RefPtr<ppdTextBuffer>                             currBuffer;
+    sigc::signal<bool(size_t)>                              swBufferID;
 };
 
 #endif

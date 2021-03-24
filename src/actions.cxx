@@ -12,8 +12,8 @@ void NewFile::signal(Glib::ustring file) {
     // if this is a multi directory name, work backwards to the last slash
     while(x != name.begin() && (*(x.base()) != '\\' || *(x.base()) != '/')) x--;
     name = std::string(x, name.end());
-    files->append(name, file, true);
-    files->setCurrentBufByName(name);
+    size_t id = files->append(name, file, true);
+    files->setCurrentBuf(id);
 }
 
 bool OpenFile::action() {
@@ -44,16 +44,17 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
                 name = tmp.substr((int)tmp.length() > x ? x + 1 : 0);
                 DLOG("Filename generated: \"%s\"", name.c_str());
 
-                files->append(name, file, true);
-                if(!files->setCurrentBufByName(name))
+                size_t id = files->append(name, file, true);
+                if(!files->setCurrentBuf(id))
                     LOG("Failed to open file!");
                 else {
                     // if there is a new * buffer then delete it
                     if(files->getAllNames().size() == 2) {
-                        auto names = files->getAllNames();
-                        for(auto fname: names) {
+                        auto names = files->getAllIDs();
+                        for(auto fID: names) {
+                            auto fname = files->getPPDTB(fID)->getName();
                             if(fname == "new 0" || fname == "new 1") {
-                                files->deleteByName(fname);
+                                files->deleteBufAt(fID);
                                 break;
                             }
                         }
@@ -71,18 +72,19 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
 }
 
 bool SaveFile::action() {
-    return files->getPPDTBByName(files->getCurrBuffer())->save();
+    return files->getPPDTB(files->getCurrBufferID())->save();
 }
 
 bool SwapFile::action() {
-    return changeName.emit(name);
+    return changeName.emit(id);
 }
 
 bool SwapFileFactory::action() {
     LOG("Generating SwapFiles to use!");
-    std::vector<Glib::ustring> names = allbufs->getAllNames();
+    std::vector<size_t> ids = allbufs->getAllIDs();
     subKey()->clear();
-    for(auto name: names) {
+    for(auto id: ids) {
+        auto name = allbufs->getPPDTB(id)->getName();
         guint num = gdk_keyval_to_unicode(name[0]);
         // search for a non collision in the filename first
         for(int pos = 1; subKey()->find(num) != subKey()->end() && (int)name.length() > pos; pos++) {
@@ -105,29 +107,29 @@ bool SwapFileFactory::action() {
                 continue;
             }
         }
-        subKey()->insert({num, Glib::RefPtr<Action>(new SwapFile(functor, name))});
+        subKey()->insert({num, Glib::RefPtr<Action>(new SwapFile(functor, id))});
     }
     return true;
 }
 
 bool CloseFile::action() {
-    Glib::ustring file = files->getCurrBuffer();
-    auto          buffers = files->getAllNames();
-    LOG("Closing file %s", file.c_str());
+    size_t file = files->getCurrBufferID();
+    auto   buffers = files->getAllIDs();
+    LOG("Closing file %s", files->getCurrBufferName().c_str());
     if(buffers.size() == 1) {
         DLOG("Opening blank buffer in place");
-        if(buffers.at(0) == "new 1") {
-            files->append("new 0");
-            files->setCurrentBufByName("new 0");
+        size_t id;
+        if(files->getCurrBufferName() == "new 1") {
+            id = files->append("new 0");
         } else {
-            files->append("new 1");
-            files->setCurrentBufByName("new 1");
+            id = files->append("new 1");
         }
-        DLOG("\"%s\" is new blank buffer", files->getCurrBuffer().c_str());
+        files->setCurrentBuf(id);
+        DLOG("\"%s\" is new blank buffer", files->getCurrBufferName().c_str());
     } else {
-        files->setCurrentBufByName(buffers.at(0) == file ? buffers.at(1) : buffers.at(0));
-        DLOG("Using \"%s\" as buffer after closing other buffer", files->getCurrBuffer().c_str());
+        files->setCurrentBuf(file == buffers.at(0) ? buffers.at(1) : buffers.at(0));
+        DLOG("Using \"%s\" as buffer after closing other buffer", files->getCurrBufferName().c_str());
     }
-    files->deleteByName(file);
+    files->deleteBufAt(file);
     return true;
 }

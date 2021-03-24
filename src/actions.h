@@ -110,30 +110,31 @@ class SwapFileFactory : public Action {
         active = true;
         dir = true;
         this->allbufs = allbufs;
-        functor = sigc::mem_fun(*allbufs, &fileList::setCurrentBufByName);
+        functor = sigc::mem_fun(*allbufs, &fileList::setCurrentBuf);
         setSubKey(Glib::RefPtr<std::unordered_map<guint, Glib::RefPtr<Action>>>(
             new std::unordered_map<guint, Glib::RefPtr<Action>>()));
     }
     bool action();
 
     private:
-    fileList *                      allbufs;
-    sigc::slot<bool(Glib::ustring)> functor;
+    fileList *               allbufs;
+    sigc::slot<bool(size_t)> functor;
 };
 
 // SwapFile: allows choosing of alternative files, subaction of SwapFileFactory
 class SwapFile : public Action {
     public:
-    SwapFile(sigc::slot<bool(Glib::ustring)> func, Glib::ustring name) {
+    SwapFile(sigc::slot<bool(size_t)> func, size_t id) {
         active = true;
         dir = false;
         changeName.connect(func);
-        this->name = name;
+        this->id = id;
     }
     bool action();
 
     private:
-    sigc::signal<bool(Glib::ustring)> changeName;
+    sigc::signal<bool(size_t)> changeName;
+    size_t id;
 };
 
 class CloseFile : public Action {

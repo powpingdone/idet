@@ -4,57 +4,70 @@
 // TODO: ADD ASYNC SUPPORT
 // TODO: FILE PERMS
 
-void fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
+size_t fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
     DLOG("Loading new buffer \"%s\"", name.c_str());
     auto x = Glib::RefPtr<ppdTextBuffer>(new ppdTextBuffer(name, file, editable));
     if(file != "") {
         x->reload();
     }
-    buffers.push_back(x);
+    size_t id = findLowestId();
+    DLOG("ID assigned %lu", id);
+    buffers.insert({id, x});
+    return id;
 }
 
-Glib::RefPtr<Gtk::TextBuffer> fileList::getBufferByName(Glib::ustring name) const {
-    auto potentBuf = getPPDTBByName(name);
+size_t fileList::findLowestId() {
+    size_t id;
+    for(id = 0; buffers.find(id) != buffers.end(); id++)
+        ;
+    DLOG("Lowest ID avail %lu", id);
+    return id;
+}
+
+Glib::RefPtr<Gtk::TextBuffer> fileList::getBuffer(size_t id) const {
+    auto potentBuf = getPPDTB(id);
     return potentBuf ? potentBuf->buffer() : nullptr;
 }
 
-Glib::RefPtr<ppdTextBuffer> fileList::getPPDTBByName(Glib::ustring name) const {
-    DLOG("Searching for \"%s\"...", name.c_str());
-    for(auto x: buffers) {
-        if(x->getName() == name) {
-            DLOG("Found matching buffer.");
-            return x;
-        }
+Glib::RefPtr<ppdTextBuffer> fileList::getPPDTB(size_t id) const {
+    DLOG("Searching for ID %zu...", id);
+    if(buffers.find(id) != buffers.end()) {
+        DLOG("Found matching buffer.");
+        return buffers.at(id);
     }
     DLOG("No matching buffer found");
     return nullptr;
 }
 
-bool fileList::setCurrentBufByName(Glib::ustring name) {
-    DLOG("Setting fileList's 'visible' buffer as %s", name.c_str());
-    if(nameExists(name)) {
-        currBuffer = name;
-        return swBuffer.emit(name);
+bool fileList::setCurrentBuf(size_t id) {
+    if(IDExists(id)) {
+        DLOG("Setting fileList's 'visible' buffer as %s", buffers.at(id)->getName().c_str());
+        currBuffer = getPPDTB(id);
+        return swBufferID.emit(id);
     }
     DLOG("Name does not exist! Not setting.");
     return false;
 }
 
-void fileList::deleteByName(Glib::ustring name) {
+void fileList::deleteBufAt(size_t id) {
     // NOTE: this does not account for duplicates
-    DLOG("Deleting buffer by name \"%s\"", name.c_str());
-    for(auto x = buffers.begin(); x != buffers.end(); x++) {
-        if(x->get()->getName() == name) {
-            DLOG("Found buffer.");
-            buffers.erase(x);
-            return;
-        }
+    DLOG("Deleting buffer by ID %lu", id);
+    if(buffers.find(id) != buffers.end()) {
+        DLOG("Found buffer.");
+        buffers.erase(id);
+        return;
     }
+}
+
+std::vector<size_t> fileList::getAllIDs() const {
+    std::vector<size_t> names;
+    for(auto x: buffers) { names.push_back(x.first); }
+    return names;
 }
 
 std::vector<Glib::ustring> fileList::getAllNames() const {
     std::vector<Glib::ustring> names;
-    for(auto x: buffers) { names.push_back(x->getName()); }
+    for(auto x: buffers) { names.push_back(x.second->getName()); }
     return names;
 }
 

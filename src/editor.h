@@ -17,7 +17,8 @@ class mainWindow : public Gtk::Window {
         updateLineNumbers();
     }
 
-    bool         swBuffer(Glib::ustring);
+    bool         swBufferByName(Glib::ustring);
+    bool         swBufferByID(size_t);
     Gtk::Window* selfReturn() { return (Gtk::Window*)this; }
 
     protected:
@@ -34,6 +35,7 @@ class mainWindow : public Gtk::Window {
     void constrain(); // setup function that gives constraints to eWlayout
     bool keyboardHandler(guint, guint, Gdk::ModifierType); // handles keyboard events
     void generateCtrlSpc(); // signal handler for ctrlspc
+    bool swBuffer(Glib::RefPtr<Gtk::TextBuffer>); // change the currently viewed buffer
 
     private:
     Gtk::Grid           masterGrid; // contains rest of boxes
