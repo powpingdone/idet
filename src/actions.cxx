@@ -1,6 +1,8 @@
 #include "actions.h"
 #include <gtkmm.h>
 
+void cleanOutNewBuf(fileList*);
+
 bool NewFile::action() {
     prompt.emit("New Filename:", &signalSlot);
     return true;
@@ -14,6 +16,7 @@ void NewFile::signal(Glib::ustring file) {
     name = std::string(x, name.end());
     size_t id = files->append(name, file, true);
     files->setCurrentBuf(id);
+    cleanOutNewBuf(files);
 }
 
 bool OpenFile::action() {
@@ -48,17 +51,7 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
                 if(!files->setCurrentBuf(id))
                     LOG("Failed to open file!");
                 else {
-                    // if there is a new * buffer then delete it
-                    if(files->getAllNames().size() == 2) {
-                        auto names = files->getAllIDs();
-                        for(auto fID: names) {
-                            auto fname = files->getPPDTB(fID)->getName();
-                            if(fname == "new 0" || fname == "new 1") {
-                                files->deleteBufAt(fID);
-                                break;
-                            }
-                        }
-                    }
+                    cleanOutNewBuf(files);
                 }
                 break;
             }
@@ -69,6 +62,20 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
             }
     }
     delete dialog;
+}
+
+void cleanOutNewBuf(fileList *files) {
+    // if there is a new * buffer then delete it
+    if(files->getAllNames().size() == 2) {
+        auto names = files->getAllIDs();
+        for(auto fID: names) {
+            auto fname = files->getPPDTB(fID)->getName();
+            if(fname == "new 0" || fname == "new 1") {
+                files->deleteBufAt(fID);
+                break;
+            }
+        }
+    }
 }
 
 bool SaveFile::action() {
@@ -84,7 +91,7 @@ bool SwapFileFactory::action() {
     std::vector<size_t> ids = allbufs->getAllIDs();
     subKey()->clear();
     for(auto id: ids) {
-        auto name = allbufs->getPPDTB(id)->getName();
+        auto  name = allbufs->getPPDTB(id)->getName();
         guint num = gdk_keyval_to_unicode(name[0]);
         // search for a non collision in the filename first
         for(int pos = 1; subKey()->find(num) != subKey()->end() && (int)name.length() > pos; pos++) {
@@ -107,7 +114,7 @@ bool SwapFileFactory::action() {
                 continue;
             }
         }
-        subKey()->insert({num, Glib::RefPtr<Action>(new SwapFile(functor, id))});
+        subKey()->insert({num, Glib::RefPtr<Action>(new SwapFile(functor, id, name))});
     }
     return true;
 }

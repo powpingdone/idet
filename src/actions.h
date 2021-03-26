@@ -124,11 +124,12 @@ class SwapFileFactory : public Action {
 // SwapFile: allows choosing of alternative files, subaction of SwapFileFactory
 class SwapFile : public Action {
     public:
-    SwapFile(sigc::slot<bool(size_t)> func, size_t id) {
+    SwapFile(sigc::slot<bool(size_t)> func, size_t id, Glib::ustring name) {
         active = true;
         dir = false;
         changeName.connect(func);
         this->id = id;
+        this->name = name;
     }
     bool action();
 

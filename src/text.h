@@ -15,7 +15,8 @@ class ppdTextBuffer {
             if(Glib::file_test(file, Glib::FileTest::IS_REGULAR)) {
                 this->file = Gio::File::create_for_path(file);
             } else {
-                LOG("File_Test failed!");
+                DLOG("File_Test failed, attempting to create file...");
+                createFile();
             }
         }
     }
@@ -26,6 +27,7 @@ class ppdTextBuffer {
     Glib::RefPtr<Gtk::TextBuffer> buffer() const { return selfbuffer; }
     Glib::RefPtr<Gio::File>       fileObj() const { return file; }
 
+    bool createFile();
     bool save();
     bool reload();
 
@@ -45,7 +47,7 @@ class fileList {
     bool                          setCurrentBuf(size_t);
     Glib::RefPtr<Gtk::TextBuffer> getBuffer(size_t) const;
     Glib::RefPtr<ppdTextBuffer>   getPPDTB(size_t) const;
-    std::vector<size_t>    getAllIDs() const;
+    std::vector<size_t>           getAllIDs() const;
 
     sigc::signal<bool(size_t)>* signalSWBuffer() { return &swBufferID; }
     bool                        IDExists(size_t id) const { return getBuffer(id) != nullptr; }

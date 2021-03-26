@@ -1,4 +1,5 @@
 #include "text.h"
+#include "glibmm/fileutils.h"
 #include <gtkmm.h>
 
 // TODO: ADD ASYNC SUPPORT
@@ -50,7 +51,6 @@ bool fileList::setCurrentBuf(size_t id) {
 }
 
 void fileList::deleteBufAt(size_t id) {
-    // NOTE: this does not account for duplicates
     DLOG("Deleting buffer by ID %lu", id);
     if(buffers.find(id) != buffers.end()) {
         DLOG("Found buffer.");
@@ -69,6 +69,27 @@ std::vector<Glib::ustring> fileList::getAllNames() const {
     std::vector<Glib::ustring> names;
     for(auto x: buffers) { names.push_back(x.second->getName()); }
     return names;
+}
+
+bool ppdTextBuffer::createFile() {
+    if(file) {
+        DLOG("File object already exists!");
+        return true;
+    }
+
+    if(fileName == "") {
+        DLOG("FileName is blank! Returning true.");
+        return true;
+    }
+
+    if(Glib::file_test(fileName, Glib::FileTest::EXISTS)) {
+        DLOG("%s aleady exists here!", Glib::file_test(fileName, Glib::FileTest::IS_DIR)? "Directory" : "File");
+        return !Glib::file_test(fileName, Glib::FileTest::IS_DIR); // return false if directory
+    }
+
+    file = Gio::File::create_for_path(fileName);
+    DLOG("File created.");
+    return save(); 
 }
 
 bool ppdTextBuffer::save() {
