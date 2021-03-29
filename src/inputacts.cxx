@@ -1,10 +1,11 @@
 #include "editor.h"
 
 void mainWindow::textPrompt(Glib::ustring prompt, sigc::slot<void(Glib::ustring)> *callback) {
-    Glib::RefPtr<Gtk::Label> label(new Gtk::Label());
-    Glib::RefPtr<Gtk::Entry> entry(new Gtk::Entry());
-    label->set_label(prompt);
-    std::vector<Glib::RefPtr<Gtk::Widget>> tree({label, entry});
+    Glib::RefPtr<Gtk::Label> label(new Gtk::Label(prompt)),
+        // hack to get around various fun things concerning focus
+        toolTip(new Gtk::Label("Tip: Press Shift+Enter to enter your prompt"));
+    Glib::RefPtr<Gtk::Entry>               entry(new Gtk::Entry());
+    std::vector<Glib::RefPtr<Gtk::Widget>> tree({label, entry, toolTip});
 
     this->userCallslot = reinterpret_cast<void *>(callback);
     this->pmodeCallback.connect(sigc::mem_fun(*this, &mainWindow::textPromptSignal));
@@ -31,6 +32,7 @@ void mainWindow::textPromptSignal() {
     }
     // cleanup
     this->userCallslot = nullptr;
+    this->pmodeCallback.clear();
     ctrlSpcView.promptModeOff();
     if(!ctrlSpcView.swapNextTree()) {
         ctrlSpcView.stop();
