@@ -1,7 +1,8 @@
 #include "actions.h"
 #include <gtkmm.h>
 
-void cleanOutNewBuf(fileList*);
+// defined to clean out "new 0/1" buffers
+void cleanOutNewBuf(fileList *);
 
 bool NewFile::action() {
     prompt.emit("New Filename:", &signalSlot);
@@ -21,6 +22,7 @@ void NewFile::signal(Glib::ustring file) {
 
 bool OpenFile::action() {
     auto dialog = new Gtk::FileChooserDialog("Open File", Gtk::FileChooser::Action::OPEN);
+    // set mainWindow to have this as a linked window, basically tell it to stop taking input
     dialog->set_transient_for(*(getMainWindow.emit()));
     dialog->set_modal();
     dialog->signal_response().connect(sigc::bind(sigc::mem_fun(*this, &OpenFile::signal), dialog));
@@ -123,8 +125,8 @@ bool CloseFile::action() {
     size_t file = files->getCurrBufferID();
     auto   buffers = files->getAllIDs();
     LOG("Closing file %s", files->getCurrBufferName().c_str());
-    if(buffers.size() == 1) {
-        DLOG("Opening blank buffer in place");
+    if(buffers.size() == 1) { // if buffer to be closed is the last "normal" buffer
+        DLOG("Opening blank \"new\" buffer in place");
         size_t id;
         if(files->getCurrBufferName() == "new 1") {
             id = files->append("new 0");
@@ -133,7 +135,8 @@ bool CloseFile::action() {
         }
         files->setCurrentBuf(id);
         DLOG("\"%s\" is new blank buffer", files->getCurrBufferName().c_str());
-    } else {
+    } else { // set current buff as something else
+        // TODO: Use history of switching between buffers
         files->setCurrentBuf(file == buffers.at(0) ? buffers.at(1) : buffers.at(0));
         DLOG("Using \"%s\" as buffer after closing other buffer", files->getCurrBufferName().c_str());
     }

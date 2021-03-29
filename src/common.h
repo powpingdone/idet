@@ -4,8 +4,8 @@
 #include <chrono>
 #include <cstdio>
 
-extern const std::chrono::time_point<std::chrono::system_clock> pt;
-extern bool                                                     enableDebug;
+extern const std::chrono::time_point<std::chrono::system_clock> pt; // point since startup of program exec
+extern bool                                                     enableDebug; // --debug
 
 // current format: "[time] file:LLineNumber->function() message\n"
 #define LOG(message, args...)                                                                                       \

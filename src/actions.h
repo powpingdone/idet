@@ -52,6 +52,9 @@ class CategoryAction : public Action {
  * */
 
 // NewFile: action to create a new buffer
+/* CALL ORDER:
+ * action() -> mainWindow::textPrompt() -> wait for gtk to signal (keyboard event)
+ * -> gtk signals -> mainWindow::textPromptSignal() -> signal() */
 class NewFile : public Action {
     public:
     NewFile(fileList *files, sigc::slot<void(Glib::ustring, sigc::slot<void(Glib::ustring)> *)> prompt) {
@@ -71,6 +74,8 @@ class NewFile : public Action {
 };
 
 // OpenFile: action to open a file
+/* CALL ORDER:
+ * action() -> Gtk::FileChooserDialog waiting -> signal()*/
 class OpenFile : public Action {
     public:
     OpenFile(fileList *win, sigc::slot<Gtk::Window *()> func) {
@@ -135,7 +140,7 @@ class SwapFile : public Action {
 
     private:
     sigc::signal<bool(size_t)> changeName;
-    size_t id;
+    size_t                     id;
 };
 
 class CloseFile : public Action {

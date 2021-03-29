@@ -14,7 +14,7 @@ class ctrlSpcHandler {
     bool swapNextTree(); // use internal cached value
     bool swapNextTree(guint); // check if category and not pmode and switch to next tree
     void useCustomTree(std::vector<Glib::RefPtr<Gtk::Widget>>); // use customtree for pmode
-    std::vector<Gtk::Widget*> giveCustomTree(); // get custom tree
+    std::vector<Gtk::Widget*> giveCustomTree(); // get custom tree for pmode
 
     bool isActive() const { return active; }
     bool isPMode() const { return pmode; }
@@ -50,7 +50,7 @@ class ctrlSpcHandler {
         treeptr = nullptr;
     Gtk::FlowBox textContain; // actual text
     bool         active = false, pmode = false;
-    guint        cachedKeyval = 0;
+    guint        cachedKeyval = 0; // internal cached value for swapNextTree
 };
 
 #endif

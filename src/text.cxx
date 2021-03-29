@@ -19,7 +19,7 @@ size_t fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
 
 size_t fileList::findLowestId() {
     size_t id;
-    for(id = 0; buffers.find(id) != buffers.end(); id++)
+    for(id = 1; buffers.find(id) != buffers.end(); id++)
         ;
     DLOG("Lowest ID avail %lu", id);
     return id;
@@ -83,13 +83,14 @@ bool ppdTextBuffer::createFile() {
     }
 
     if(Glib::file_test(fileName, Glib::FileTest::EXISTS)) {
-        DLOG("%s aleady exists here!", Glib::file_test(fileName, Glib::FileTest::IS_DIR)? "Directory" : "File");
+        DLOG("%s aleady exists here at %s!", Glib::file_test(fileName, Glib::FileTest::IS_DIR) ? "Directory" : "File",
+            fileName.c_str());
         return !Glib::file_test(fileName, Glib::FileTest::IS_DIR); // return false if directory
     }
 
     file = Gio::File::create_for_path(fileName);
     DLOG("File created.");
-    return save(); 
+    return save();
 }
 
 bool ppdTextBuffer::save() {

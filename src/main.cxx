@@ -3,10 +3,13 @@
 
 // start timer
 const std::chrono::time_point<std::chrono::system_clock> pt = std::chrono::system_clock::now();
-bool                                                     enableDebug;
+
+// flags
+bool enableDebug;
 
 int main(int argc, char* argv[]) {
     enableDebug = false;
+    // TODO: more flag + new file parsing
     for(int pos = 0; pos < argc; pos++) {
         if(std::string(argv[pos]) == "--debug") {
             enableDebug = true;

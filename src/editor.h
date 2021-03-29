@@ -17,9 +17,8 @@ class mainWindow : public Gtk::Window {
         updateLineNumbers();
     }
 
-    bool         swBufferByName(Glib::ustring);
-    bool         swBufferByID(size_t);
-    Gtk::Window* selfReturn() { return (Gtk::Window*)this; }
+    bool         swBufferByID(size_t); // used to swap to text buffers in buffers
+    Gtk::Window* selfReturn() { return (Gtk::Window*)this; } // transient windows
 
     protected:
     void focusCtrlSpc() {
@@ -35,7 +34,7 @@ class mainWindow : public Gtk::Window {
     void constrain(); // setup function that gives constraints to eWlayout
     bool keyboardHandler(guint, guint, Gdk::ModifierType); // handles keyboard events
     void generateCtrlSpc(); // signal handler for ctrlspc
-    bool swBuffer(Glib::RefPtr<Gtk::TextBuffer>); // change the currently viewed buffer
+    bool swBuffer(Glib::RefPtr<Gtk::TextBuffer>); // change the currently viewed buffer directly
 
     private:
     Gtk::Grid           masterGrid; // contains rest of boxes

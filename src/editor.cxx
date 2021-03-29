@@ -10,6 +10,8 @@ mainWindow::mainWindow() {
     auto kH = Gtk::EventControllerKey::create();
     kH->signal_key_pressed().connect(sigc::mem_fun(*this, &mainWindow::keyboardHandler), false);
     add_controller(kH);
+    // TODO: Use cached value for default size or something else like monitor size
+    set_default_size(500, 500);
 
     // setup box containing the other component boxes
     masterGrid.set_margin(10);
@@ -130,6 +132,7 @@ bool mainWindow::swBuffer(Glib::RefPtr<Gtk::TextBuffer> buf) {
 }
 
 bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType state) {
+    // ctrl + spc
     if(keyval == GDK_KEY_space && (state & Gdk::ModifierType::CONTROL_MASK) == Gdk::ModifierType::CONTROL_MASK) {
         if(ctrlSpcView.isActive()) {
             LOG("Deactivating ctrlSpc.");
@@ -149,7 +152,7 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
             ctrlSpcView.generate();
         }
         return true;
-    } else if(ctrlSpcView.isPMode() && keyval == GDK_KEY_Return) { // done prompting the user
+    } else if(ctrlSpcView.isPMode() && keyval == GDK_KEY_Return) { // done prompting the user, enter during pmode
         pmodeCallback.emit();
     }
     // if the previous does not happen, try checking here
@@ -158,9 +161,11 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
 
 void mainWindow::constrain() {
     // clang-format off
+    // TODO: resize numbers dynamically to font
     /*
      * "muh gui boilerplate"
      * You can close this function.
+     * tldr: how to get fancy line numbers
      *
      * Roadmap:
      * tE, sL, sC are equivalent vars
@@ -282,7 +287,7 @@ void mainWindow::constrain() {
     );
 
     eSrcLayout->add_constraint( // make line numbers 48 pix long
-        Gtk::Constraint::create( //TODO: resize dynamically to font
+        Gtk::Constraint::create( 
             sourceLines.make_refptr_constrainttarget(),
             Gtk::Constraint::Attribute::WIDTH,
             Gtk::Constraint::Relation::EQ,

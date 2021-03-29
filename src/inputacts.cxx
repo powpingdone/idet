@@ -3,6 +3,7 @@
 void mainWindow::textPrompt(Glib::ustring prompt, sigc::slot<void(Glib::ustring)> *callback) {
     Glib::RefPtr<Gtk::Label> label(new Gtk::Label(prompt)),
         // hack to get around various fun things concerning focus
+        // tbh? I wouldnt do this if i could figure out signal_editing_done()
         toolTip(new Gtk::Label("Tip: Press Shift+Enter to enter your prompt"));
     Glib::RefPtr<Gtk::Entry>               entry(new Gtk::Entry());
     std::vector<Glib::RefPtr<Gtk::Widget>> tree({label, entry, toolTip});
