@@ -59,7 +59,7 @@ mainWindow::mainWindow() {
     // for now, use just a sample buffer
     buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
     buffers.append("new 1");
-    buffers.setCurrentBuf(0);
+    buffers.setCurrentBuf(1);
 
     // and then actions
     // but first: macros
