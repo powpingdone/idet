@@ -6,6 +6,7 @@
 #include <string>
 
 mainWindow::mainWindow() {
+    DLOG("INIT setup!");
     set_title("IdET");
     auto kH = Gtk::EventControllerKey::create();
     kH->signal_key_pressed().connect(sigc::mem_fun(*this, &mainWindow::keyboardHandler), false);
@@ -23,11 +24,8 @@ mainWindow::mainWindow() {
     masterGrid.set_column_homogeneous();
     masterGrid.attach(ctrlSpc, 0, 1);
 
-    // setup constraints for "nice line numbering"
-    constrain();
-    textEditor.set_layout_manager(eSrcLayout);
-
     // setup lines
+    DLOG("Setup sourceHolder tree");
     sourceLines.set_name("sourceLines");
     sourceLines.set_editable(false);
     sourceLines.set_cursor_visible(false);
@@ -48,8 +46,13 @@ mainWindow::mainWindow() {
     sourceHolder.set_child(textEditor);
     sourceHolder.set_expand();
 
+    // setup constraints for "nice line numbering"
+    constrain();
+    textEditor.set_layout_manager(eSrcLayout);
+
     // setup ctrlSpc
     // inspired by both vim-which-key and vim-ctrlspace
+    DLOG("Setup ctrlSpc");
     ctrlSpc.set_name("ctrlSpc");
     ctrlSpc.append(ctrlSpcView.ctrlSpcSelect);
     ctrlSpc.set_visible(false);
@@ -57,6 +60,7 @@ mainWindow::mainWindow() {
     ctrlSpc.set_focus_on_click();
 
     // for now, use just a sample buffer
+    DLOG("BUFFERS up!");
     buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
     buffers.append("new 1");
     buffers.setCurrentBuf(1);
@@ -181,7 +185,8 @@ void mainWindow::constrain() {
      * s{L,C}.bottom = tE.bottom
      * sL.width = 48
      * */
-    
+    DLOG("Constructing Constraints");
+
     eSrcLayout->add_constraint( // bind to start of editor grid
         Gtk::Constraint::create(
             textEditor.make_refptr_constrainttarget(),
