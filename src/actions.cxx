@@ -37,6 +37,7 @@ void OpenFile::signal(int response, Gtk::FileChooserDialog *dialog) {
     switch(response) {
         case Gtk::ResponseType::OK:
             {
+                // TODO: this does not work for files that exist in FUSE (ie: gvfs), USE get_uri()
                 auto file = Glib::ustring(dialog->get_file()->get_path());
                 LOG("Opening file \"%s\"", file.c_str());
 
