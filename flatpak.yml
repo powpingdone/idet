@@ -9,11 +9,6 @@ finish-args:
   - "--socket=x11"
   - "--socket=wayland"
   - "--filesystem=host"
-  # I can't seem to figure out why it can't contact DBUS,
-  # for now this is a security nightmare workaround
-  # see https://docs.flatpak.org/en/latest/sandbox-permissions.html#d-bus-access
-  # for why this is a *very* bad idea
-  - "--socket=session-bus"
 modules:
   - name: libsigcpp
     buildsystem: meson
