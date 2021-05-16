@@ -2,6 +2,7 @@
 #define EDITOR_H
 
 #include "ctrlspc.h"
+#include "gdkmm/enums.h"
 #include "text.h"
 #include <gtkmm.h>
 
@@ -55,13 +56,19 @@ class mainWindow : public Gtk::Window {
     public:
     void textPrompt(
         Glib::ustring, sigc::slot<void(Glib::ustring)>*); // prompt user input with a text entry (Gtk::entry)
+    void promptYesNo(Glib::ustring, bool, sigc::slot<void(bool)>*); // prompt user with yes/no question
 
     protected:
-    void textPromptSignal(); // callback signal after user presses enter for textPrompt
+    bool textPromptSignal(guint, guint, Gdk::ModifierType); // callback signal after user presses enter for textPrompt
+    bool promptYesNoSignal(guint, guint, Gdk::ModifierType); // callback signal for promptYesNo
+
+    bool checkCallslot(); // utility function to check if the callslot is there 
+    bool checkKey(guint, std::vector<guint>); // utility function to check if a key is a certain key 
+    void cleanupPostSignal(); // utility function to generically cleanup action stuff
 
     private:
-    void*                userCallslot; // user function to be typically run after the pmode callback is run
-    sigc::signal<void()> pmodeCallback; // signal to trigger on activation of pmode
+    void* userCallslot; // user function to be typically run after the pmode callback is run
+    sigc::signal<bool(guint, guint, Gdk::ModifierType)> pmodeCallback; // signal to trigger on activation of pmode
 };
 
 #endif // EDITOR_H

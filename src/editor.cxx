@@ -156,8 +156,9 @@ bool mainWindow::keyboardHandler(guint keyval, guint keycode, Gdk::ModifierType 
             ctrlSpcView.generate();
         }
         return true;
-    } else if(ctrlSpcView.isPMode() && keyval == GDK_KEY_Return) { // done prompting the user, enter during pmode
-        pmodeCallback.emit();
+    } // check if the current pmode is handling it
+    else if(ctrlSpcView.isPMode() && pmodeCallback.emit(keyval, keycode, state)) {
+        return true; // it did handle it
     }
     // if the previous does not happen, try checking here
     return ctrlSpcView.keyboardHandler(keyval, keycode, state);

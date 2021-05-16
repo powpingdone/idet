@@ -56,7 +56,8 @@ class fileList {
         for(auto x: buffers)
             if(x.second->buffer() == currBuffer->buffer())
                 return x.first;
-        // unreachable
+        // unreachable, but
+        LOG("Somehow, there is no currently active buffer ID!");
         return 0;
     }
 
