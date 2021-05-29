@@ -32,6 +32,23 @@ void mainWindow::cleanupPostSignal() {
     }
 }
 
+void mainWindow::queueAction(Action inp) {
+    DLOG("Pushing action");
+    actionAbleQueue.push(inp);
+}
+
+bool mainWindow::popAction() {
+    if(actionAbleQueue.empty())
+        return false;
+    DLOG("Popping Action");
+    Action action = actionAbleQueue.front();
+    action.activate();
+    actionAbleQueue.pop();
+    return true;
+}
+
+// PROMPTS
+
 void mainWindow::textPrompt(Glib::ustring prompt, sigc::slot<void(Glib::ustring)> *callback) {
     DLOG("\"%s\" ::: Prompting text.", prompt.c_str());
     Glib::RefPtr<Gtk::Label> label(new Gtk::Label(prompt)),
@@ -57,11 +74,11 @@ bool mainWindow::textPromptSignal(guint keyval, guint keycode, Gdk::ModifierType
     sigc::signal<void(Glib::ustring)> sig;
     auto                              functor = reinterpret_cast<sigc::slot<void(Glib::ustring)> *>(this->userCallslot);
     sig.connect(*functor);
-    auto widgets = ctrlSpcView.giveCustomTree();
+    auto        widgets = ctrlSpcView.giveCustomTree();
     Gtk::Entry *entry = dynamic_cast<Gtk::Entry *>(widgets[1]);
     DLOG("Got %s from buffer", entry->get_buffer()->get_text().c_str());
     sig.emit(entry->get_buffer()->get_text());
-    
+
     cleanupPostSignal();
     return true;
 }
@@ -93,7 +110,7 @@ bool mainWindow::promptYesNoSignal(guint keyval, guint keycode, Gdk::ModifierTyp
         sig.emit(prompt->get_text().at(prompt->get_text().length() - 3) != 'N');
     else
         sig.emit(keyval == GDK_KEY_y || keyval == GDK_KEY_Y);
-    
+
     cleanupPostSignal();
     return true;
 }

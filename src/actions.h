@@ -143,6 +143,7 @@ class SwapFile : public Action {
     size_t                     id;
 };
 
+// CloseFile: close the currently opened file
 class CloseFile : public Action {
     public:
     CloseFile(fileList *files) {

@@ -61,7 +61,8 @@ mainWindow::mainWindow() {
 
     // for now, use just a sample buffer
     DLOG("BUFFERS up!");
-    buffers.signalSWBuffer()->connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
+    buffers.signalSWBuffer().connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
+    buffers.setSlotReloadYN(sigc::mem_fun(*this, &mainWindow::promptYesNo));
     buffers.append("new 1");
     buffers.setCurrentBuf(1);
 

@@ -21,21 +21,40 @@ class ppdTextBuffer {
         }
     }
 
-    Glib::ustring                 getName() const { return name; }
-    Glib::ustring                 getFileName() const { return fileName; }
-    bool                          isEditable() const { return editable; }
-    Glib::RefPtr<Gtk::TextBuffer> buffer() const { return selfbuffer; }
-    Glib::RefPtr<Gio::File>       fileObj() const { return file; }
+    // getters/setters
+    Glib::ustring                                                     getName() const { return name; }
+    Glib::ustring                                                     getFileName() const { return fileName; }
+    bool                                                              isEditable() const { return editable; }
+    Glib::RefPtr<Gtk::TextBuffer>                                     buffer() const { return selfbuffer; }
+    Glib::RefPtr<Gio::File>                                           fileObj() const { return file; }
+    sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)>& reloadPromptSignal() { return reloadPrompt; }
+    sigc::signal<void()>&                                             popSignal() { return pop; }
 
+    // generic file functions
     bool createFile();
     bool save();
     bool reload();
 
+    // file reloading handling
+    // this->monitor signals -> reloadPromptCreate -> mainWindow::queueAction -> wait -> reloadPromptSend ->
+    // mainWindow::promptYesNo -> wait -> mainWindow::promptYesNoSignal -> reloadPromptRecieve
+    void reloadPromptCreate(const Glib::RefPtr<Gio::File>&, const Glib::RefPtr<Gio::File>&, Gio::FileMonitor::Event);
+    void reloadPromptSend();
+    void reloadPromptReceive(bool);
+
     private:
-    Glib::ustring                 name, fileName;
-    Glib::RefPtr<Gio::File>       file = nullptr;
-    bool                          editable;
-    Glib::RefPtr<Gtk::TextBuffer> selfbuffer = Gtk::TextBuffer::create();
+    Glib::ustring                  name, fileName;
+    Glib::RefPtr<Gio::File>        file = nullptr;
+    bool                           editable;
+    Glib::RefPtr<Gtk::TextBuffer>  selfbuffer = Gtk::TextBuffer::create();
+    Glib::RefPtr<Gio::FileMonitor> monitor;
+
+    // used in reloading files
+    sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadPrompt; // signal mainWindow::promptYesNo
+    std::vector<Glib::RefPtr<Gio::File>>                             tmpFiles;
+    Gio::FileMonitor::Event                                          tmpEvent;
+    sigc::slot<void(bool)> reloadPromptReceiveSlot = sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptReceive);
+    sigc::signal<void()>   pop;
 };
 
 // container of files
@@ -49,8 +68,13 @@ class fileList {
     Glib::RefPtr<ppdTextBuffer>   getPPDTB(size_t) const;
     std::vector<size_t>           getAllIDs() const;
 
-    sigc::signal<bool(size_t)>* signalSWBuffer() { return &swBufferID; }
+    sigc::signal<bool(size_t)>& signalSWBuffer() { return swBufferID; }
     bool                        IDExists(size_t id) const { return getBuffer(id) != nullptr; }
+
+    void setSlotReloadYN(sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot) {
+        this->reloadSlot = reloadSlot;
+    }
+    void setSlotPopAction(sigc::slot<void()> popFunc) { this->popFunc = popFunc; }
 
     size_t getCurrBufferID() const {
         for(auto x: buffers)
@@ -68,9 +92,11 @@ class fileList {
     size_t findLowestId();
 
     private:
-    std::unordered_map<size_t, Glib::RefPtr<ppdTextBuffer>> buffers;
-    Glib::RefPtr<ppdTextBuffer>                             currBuffer;
-    sigc::signal<bool(size_t)>                              swBufferID;
+    std::unordered_map<size_t, Glib::RefPtr<ppdTextBuffer>> buffers; // all current text buffers
+    Glib::RefPtr<ppdTextBuffer>                             currBuffer; // reference buffer to currently active buffer
+    sigc::signal<bool(size_t)>                              swBufferID; // signal to call mainWindow::swBufferByID
+    sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot; // slot to hold mainWindow::promptYesNo
+    sigc::slot<void()>                                             popFunc; // slot to hold mainWindow::popAction
 };
 
 #endif
