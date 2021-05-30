@@ -114,7 +114,7 @@ class fileList {
     sigc::signal<bool(size_t)>                              swBufferID; // signal to call mainWindow::swBufferByID
     sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot; // slot to hold mainWindow::promptYesNo
     sigc::slot<bool()>                                             popFunc; // slot to hold mainWindow::popAction
-    sigc::slot<void(Glib::RefPtr<Action>)>                                       pushFunc; // slot to hold mainWindow::queueAction
+    sigc::slot<void(Glib::RefPtr<Action>)>                         pushFunc; // slot to hold mainWindow::queueAction
 };
 
 #endif

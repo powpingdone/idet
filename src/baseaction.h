@@ -1,8 +1,8 @@
 #ifndef BASEACTION_H
 #define BASEACTION_H
 
-#include <gtkmm.h>
 #include "common.h"
+#include <gtkmm.h>
 
 // BASE ACTION CLASS
 class Action {
