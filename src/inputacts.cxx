@@ -32,23 +32,27 @@ void mainWindow::cleanupPostSignal() {
     }
 }
 
-void mainWindow::queueAction(Action inp) {
+void mainWindow::queueAction(Glib::RefPtr<Action> inp) {
     DLOG("Pushing action");
+    bool wasEmpty = actionAbleQueue.empty();
     actionAbleQueue.push(inp);
+    if(wasEmpty)
+        popAction();
 }
 
 bool mainWindow::popAction() {
     if(actionAbleQueue.empty())
         return false;
     DLOG("Popping Action");
-    Action action = actionAbleQueue.front();
-    action.activate();
+    Glib::RefPtr<Action> action = actionAbleQueue.front();
+    action->activate();
     actionAbleQueue.pop();
     return true;
 }
 
 // PROMPTS
 
+// TEXT PROMPT
 void mainWindow::textPrompt(Glib::ustring prompt, sigc::slot<void(Glib::ustring)> *callback) {
     DLOG("\"%s\" ::: Prompting text.", prompt.c_str());
     Glib::RefPtr<Gtk::Label> label(new Gtk::Label(prompt)),
@@ -83,6 +87,7 @@ bool mainWindow::textPromptSignal(guint keyval, guint keycode, Gdk::ModifierType
     return true;
 }
 
+// PROMPT YES NO
 void mainWindow::promptYesNo(Glib::ustring prompt, bool defaultOption, sigc::slot<void(bool)> *callback) {
     DLOG("\"%s\" ::: Prompting YES/NO with default '%c'", prompt.c_str(), defaultOption ? 'y' : 'n');
     Glib::RefPtr<Gtk::Label>               label(new Gtk::Label(prompt.append(defaultOption ? " (Y/n)" : " (y/N)")));

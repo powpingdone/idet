@@ -1,23 +1,33 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#include "baseaction.h"
 #include "common.h"
 #include <gtkmm.h>
 
 // generic text buffer for handling text and files
 class ppdTextBuffer {
     public:
-    ppdTextBuffer(Glib::ustring name, Glib::ustring file = "", bool editable = true) {
+    ppdTextBuffer(Glib::ustring name, Glib::ustring file = "", bool editable = true, size_t id = 0) {
         this->name = name;
         this->fileName = file;
         this->editable = editable;
+        this->id = id;
         if(file != "") {
             if(Glib::file_test(file, Glib::FileTest::IS_REGULAR)) {
                 this->file = Gio::File::create_for_path(file);
             } else {
                 DLOG("File_Test failed, attempting to create file...");
-                createFile();
+                if(!createFile()) {
+                    LOG("UNABLE TO OPEN FILE!");
+                    // TODO: something....?
+                }
             }
+        }
+        if(this->file) {
+            monitor = this->file->monitor();
+            monitor->signal_changed().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptCreate));
+            DLOG("Monitor on!");
         }
     }
 
@@ -28,7 +38,9 @@ class ppdTextBuffer {
     Glib::RefPtr<Gtk::TextBuffer>                                     buffer() const { return selfbuffer; }
     Glib::RefPtr<Gio::File>                                           fileObj() const { return file; }
     sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)>& reloadPromptSignal() { return reloadPrompt; }
-    sigc::signal<void()>&                                             popSignal() { return pop; }
+    sigc::signal<void(Glib::RefPtr<Action>)>&                         pushSignal() { return push; }
+    sigc::signal<bool()>&                                             popSignal() { return pop; }
+    void selfDestructSlot(sigc::slot<void(size_t)> func) { selfDestruct = func; }
 
     // generic file functions
     bool createFile();
@@ -46,15 +58,18 @@ class ppdTextBuffer {
     Glib::ustring                  name, fileName;
     Glib::RefPtr<Gio::File>        file = nullptr;
     bool                           editable;
+    size_t                         id;
     Glib::RefPtr<Gtk::TextBuffer>  selfbuffer = Gtk::TextBuffer::create();
     Glib::RefPtr<Gio::FileMonitor> monitor;
 
     // used in reloading files
     sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadPrompt; // signal mainWindow::promptYesNo
+    sigc::signal<void(Glib::RefPtr<Action>)>                         push; // signal mainWindow::queueAction()
+    sigc::signal<bool()>                                             pop; // signal mainWindow::popAction()
+    sigc::slot<void(size_t)>                                         selfDestruct;
     std::vector<Glib::RefPtr<Gio::File>>                             tmpFiles;
     Gio::FileMonitor::Event                                          tmpEvent;
     sigc::slot<void(bool)> reloadPromptReceiveSlot = sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptReceive);
-    sigc::signal<void()>   pop;
 };
 
 // container of files
@@ -63,6 +78,7 @@ class fileList {
     size_t append(Glib::ustring name, Glib::ustring file = "", bool editable = "");
 
     void                          deleteBufAt(size_t);
+    void                          deleteAndSwapToValidBuffer(size_t);
     bool                          setCurrentBuf(size_t);
     Glib::RefPtr<Gtk::TextBuffer> getBuffer(size_t) const;
     Glib::RefPtr<ppdTextBuffer>   getPPDTB(size_t) const;
@@ -74,7 +90,8 @@ class fileList {
     void setSlotReloadYN(sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot) {
         this->reloadSlot = reloadSlot;
     }
-    void setSlotPopAction(sigc::slot<void()> popFunc) { this->popFunc = popFunc; }
+    void setSlotPopAction(sigc::slot<bool()> popFunc) { this->popFunc = popFunc; }
+    void setSlotPushAction(sigc::slot<void(Glib::RefPtr<Action>)> pushFunc) { this->pushFunc = pushFunc; }
 
     size_t getCurrBufferID() const {
         for(auto x: buffers)
@@ -96,7 +113,8 @@ class fileList {
     Glib::RefPtr<ppdTextBuffer>                             currBuffer; // reference buffer to currently active buffer
     sigc::signal<bool(size_t)>                              swBufferID; // signal to call mainWindow::swBufferByID
     sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot; // slot to hold mainWindow::promptYesNo
-    sigc::slot<void()>                                             popFunc; // slot to hold mainWindow::popAction
+    sigc::slot<bool()>                                             popFunc; // slot to hold mainWindow::popAction
+    sigc::slot<void(Glib::RefPtr<Action>)>                                       pushFunc; // slot to hold mainWindow::queueAction
 };
 
 #endif

@@ -63,6 +63,8 @@ mainWindow::mainWindow() {
     DLOG("BUFFERS up!");
     buffers.signalSWBuffer().connect(sigc::mem_fun(*this, &mainWindow::swBufferByID));
     buffers.setSlotReloadYN(sigc::mem_fun(*this, &mainWindow::promptYesNo));
+    buffers.setSlotPopAction(sigc::mem_fun(*this, &mainWindow::popAction));
+    buffers.setSlotPushAction(sigc::mem_fun(*this, &mainWindow::queueAction));
     buffers.append("new 1");
     buffers.setCurrentBuf(1);
 

@@ -10,7 +10,7 @@ idet_sources = [
   'text.h',
   'text.cxx',
   'common.h',
-  'queueaction.h'
+  'baseaction.h'
 ]
 
 depends = [

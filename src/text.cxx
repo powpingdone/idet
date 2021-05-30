@@ -8,13 +8,16 @@
 
 size_t fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
     DLOG("Loading new buffer \"%s\"", name.c_str());
-    auto x = Glib::RefPtr<ppdTextBuffer>(new ppdTextBuffer(name, file, editable));
+    size_t id = findLowestId();
+    DLOG("ID assigned %lu", id);
+    auto x = Glib::RefPtr<ppdTextBuffer>(new ppdTextBuffer(name, file, editable, id));
     if(file != "") {
         x->reload();
     }
     x->reloadPromptSignal().connect(reloadSlot);
-    size_t id = findLowestId();
-    DLOG("ID assigned %lu", id);
+    x->popSignal().connect(popFunc);
+    x->pushSignal().connect(pushFunc);
+    x->selfDestructSlot(sigc::mem_fun(*this, &fileList::deleteAndSwapToValidBuffer));
     buffers.insert({id, x});
     return id;
 }
@@ -61,6 +64,16 @@ void fileList::deleteBufAt(size_t id) {
     }
 }
 
+void fileList::deleteAndSwapToValidBuffer(size_t toDel) {
+    auto ids = getAllIDs();
+    // TODO: USE HISTORY FOR THIS
+    size_t switchTo = ids.at(0);
+    if(switchTo == toDel)
+        switchTo = ids.at(1);
+    setCurrentBuf(switchTo);
+    deleteBufAt(toDel);
+}
+
 std::vector<size_t> fileList::getAllIDs() const {
     std::vector<size_t> names;
     for(auto x: buffers) { names.push_back(x.first); }
@@ -94,9 +107,6 @@ bool ppdTextBuffer::createFile() {
 
     file = Gio::File::create_for_path(fileName);
     DLOG("File created.");
-    monitor = file->monitor();
-    monitor->signal_changed().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptCreate));
-    DLOG("Monitor on!");
     return save();
 }
 
@@ -127,12 +137,29 @@ bool ppdTextBuffer::reload() {
     return true;
 }
 
+class CheckUP : public Action { // small class to be used in reloadPromptCreate
+    public:
+    CheckUP() { active = true; }
+    sigc::signal<void()> &sig() { return sendSig; }
+
+    protected:
+    virtual bool action() {
+        sendSig.emit();
+        return true;
+    }
+
+    private:
+    sigc::signal<void()> sendSig;
+};
+
 void ppdTextBuffer::reloadPromptCreate(
     const Glib::RefPtr<Gio::File> &file1, const Glib::RefPtr<Gio::File> &file2, Gio::FileMonitor::Event event) {
     tmpFiles.push_back(file1);
     tmpFiles.push_back(file2);
     tmpEvent = event;
-
+    Glib::RefPtr<CheckUP> action(new CheckUP());
+    action->sig().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptSend));
+    push.emit(action);
 }
 
 void ppdTextBuffer::reloadPromptSend() {
@@ -160,8 +187,24 @@ void ppdTextBuffer::reloadPromptSend() {
                 break;
             }
     }
-
 }
+
+class Death : public Action { // small class to signal death in reloadPromptReceive
+    public:
+    Death() { active = true; }
+    sigc::signal<void(size_t)> &killSwitch() { return death; }
+    void                        setID(size_t id) { this->id = id; }
+
+    protected:
+    virtual bool action() {
+        death.emit(id);
+        return true;
+    }
+
+    private:
+    sigc::signal<void(size_t)> death;
+    size_t                     id;
+};
 
 void ppdTextBuffer::reloadPromptReceive(bool outcome) {
     if(!outcome) { // failed
@@ -174,11 +217,13 @@ void ppdTextBuffer::reloadPromptReceive(bool outcome) {
             this->monitor = this->file->monitor();
             this->monitor->signal_changed().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptCreate));
         } else if(tmpEvent == Gio::FileMonitor::Event::DELETED) {
-            
+            Glib::RefPtr<Death> run(new Death());
+            run->setID(this->id);
+            run->killSwitch().connect(selfDestruct);
+            push.emit(run);
         } else { // event == CHANGED
             reload();
         }
-
     }
     tmpFiles.clear();
     pop.emit();

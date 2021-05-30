@@ -69,13 +69,14 @@ bool ctrlSpcHandler::swapNextTree() {
 }
 
 bool ctrlSpcHandler::swapNextTree(guint keyval) {
-    if(treeptr->at(keyval)->category() && !pmode) {
+    if(treeptr && !pmode && treeptr->at(keyval)->category()) {
         DLOG("Setting next tree.");
         treeptr = treeptr->at(keyval)->subKey();
         this->generate();
         return true;
     }
-    DLOG("Did not find category to swap to. PMODE is %s.", pmode ? "on" : "off");
+    DLOG("Did not find category to swap to. PMODE is %s, and treeptr is %s.", pmode ? "on" : "off",
+        treeptr ? "not null" : "null");
     return false;
 }
 

@@ -59,7 +59,7 @@ class mainWindow : public Gtk::Window {
         Glib::ustring, sigc::slot<void(Glib::ustring)>*); // prompt user input with a text entry (Gtk::entry)
     void promptYesNo(Glib::ustring, bool, sigc::slot<void(bool)>*); // prompt user with yes/no question
 
-    void queueAction(Action); //queue an action to happen
+    void queueAction(Glib::RefPtr<Action>); //queue an action to happen
     bool popAction(); // do next action, returns false when there are no actions
 
     protected:
@@ -73,7 +73,7 @@ class mainWindow : public Gtk::Window {
     private:
     void* userCallslot; // user function to be typically run after the pmode callback is run
     sigc::signal<bool(guint, guint, Gdk::ModifierType)> pmodeCallback; // signal to trigger on activation of pmode
-    std::queue<Action> actionAbleQueue;
+    std::queue<Glib::RefPtr<Action>> actionAbleQueue; // queue to do actions
 };
 
 #endif // EDITOR_H
