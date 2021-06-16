@@ -17,6 +17,8 @@ size_t fileList::append(Glib::ustring name, Glib::ustring file, bool editable) {
     x->reloadPromptSignal().connect(reloadSlot);
     x->popSignal().connect(popFunc);
     x->pushSignal().connect(pushFunc);
+    x->queueOFFSignal().connect(queueOFFSlot);
+    x->queueONSignal().connect(queueONSlot);
     x->selfDestructSlot(sigc::mem_fun(*this, &fileList::deleteAndSwapToValidBuffer));
     buffers.insert({id, x});
     return id;
@@ -140,7 +142,7 @@ bool ppdTextBuffer::reload() {
 class CheckUP : public Action { // small class to be used in reloadPromptCreate
     public:
     CheckUP() { active = true; }
-    sigc::signal<void()> &sig() { return sendSig; }
+    sigc::signal<void()> &sendSignal() { return sendSig; }
 
     protected:
     virtual bool action() {
@@ -154,12 +156,27 @@ class CheckUP : public Action { // small class to be used in reloadPromptCreate
 
 void ppdTextBuffer::reloadPromptCreate(
     const Glib::RefPtr<Gio::File> &file1, const Glib::RefPtr<Gio::File> &file2, Gio::FileMonitor::Event event) {
-    tmpFiles.push_back(file1);
-    tmpFiles.push_back(file2);
-    tmpEvent = event;
-    Glib::RefPtr<CheckUP> action(new CheckUP());
-    action->sig().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptSend));
-    push.emit(action);
+    using Event = Gio::FileMonitor::Event;
+    switch(event) {
+        case Event::CHANGED:
+        case Event::MOVED:
+        case Event::RENAMED:
+            {
+                tmpFiles.push_back(file1);
+                tmpFiles.push_back(file2);
+                tmpEvent = event;
+                Glib::RefPtr<CheckUP> action(new CheckUP());
+                action->sendSignal().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptSend));
+                push.emit(action);
+                pop.emit();
+                break;
+            }
+        default:
+            {
+                LOG("Caught event %d. Not screwing with it.", (int)tmpEvent);
+                break;
+            }
+    }
 }
 
 void ppdTextBuffer::reloadPromptSend() {
@@ -168,43 +185,24 @@ void ppdTextBuffer::reloadPromptSend() {
         case Event::CHANGED:
             {
                 reloadPrompt.emit("File on disk changed. Reload?", true, &reloadPromptReceiveSlot);
-                break;
-            }
-        case Event::DELETED:
-            {
-                reloadPrompt.emit("File on disk deleted. Unload buffer?", false, &reloadPromptReceiveSlot);
+                queueON.emit();
                 break;
             }
         case Event::MOVED:
         case Event::RENAMED:
             {
                 reloadPrompt.emit("File on disk moved/renamed. Change path?", true, &reloadPromptReceiveSlot);
+                queueON.emit();
                 break;
             }
         default:
             {
-                LOG("%d is the event caught. Not screwing with it.", tmpEvent);
+                DLOG("Somehow caught event %d. THIS IS VERY BAD, THIS IS A CASE THAT SHOULD NEVER HAPPEN!",
+                    (int)tmpEvent);
                 break;
             }
     }
 }
-
-class Death : public Action { // small class to signal death in reloadPromptReceive
-    public:
-    Death() { active = true; }
-    sigc::signal<void(size_t)> &killSwitch() { return death; }
-    void                        setID(size_t id) { this->id = id; }
-
-    protected:
-    virtual bool action() {
-        death.emit(id);
-        return true;
-    }
-
-    private:
-    sigc::signal<void(size_t)> death;
-    size_t                     id;
-};
 
 void ppdTextBuffer::reloadPromptReceive(bool outcome) {
     if(!outcome) { // failed
@@ -216,15 +214,11 @@ void ppdTextBuffer::reloadPromptReceive(bool outcome) {
             this->file = tmpFiles.at(1);
             this->monitor = this->file->monitor();
             this->monitor->signal_changed().connect(sigc::mem_fun(*this, &ppdTextBuffer::reloadPromptCreate));
-        } else if(tmpEvent == Gio::FileMonitor::Event::DELETED) {
-            Glib::RefPtr<Death> run(new Death());
-            run->setID(this->id);
-            run->killSwitch().connect(selfDestruct);
-            push.emit(run);
         } else { // event == CHANGED
             reload();
         }
     }
     tmpFiles.clear();
+    queueOFF.emit();
     pop.emit();
 }

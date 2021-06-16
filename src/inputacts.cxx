@@ -34,15 +34,14 @@ void mainWindow::cleanupPostSignal() {
 
 void mainWindow::queueAction(Glib::RefPtr<Action> inp) {
     DLOG("Pushing action");
-    bool wasEmpty = actionAbleQueue.empty();
     actionAbleQueue.push(inp);
-    if(wasEmpty)
-        popAction();
 }
 
 bool mainWindow::popAction() {
-    if(actionAbleQueue.empty())
+    if(actionAbleQueue.empty() || queueActive) {
+        DLOG("%s, not popping", queueActive ? "Queue Active" : "Queue Empty");
         return false;
+    }
     DLOG("Popping Action");
     Glib::RefPtr<Action> action = actionAbleQueue.front();
     action->activate();
@@ -61,12 +60,14 @@ void mainWindow::textPrompt(Glib::ustring prompt, sigc::slot<void(Glib::ustring)
         toolTip(new Gtk::Label("Tip: Press Shift+Enter to enter your prompt"));
     Glib::RefPtr<Gtk::Entry>               entry(new Gtk::Entry());
     std::vector<Glib::RefPtr<Gtk::Widget>> tree({label, entry, toolTip});
+    ctrlSpc.set_visible(true);
 
     this->userCallslot = reinterpret_cast<void *>(callback);
     this->pmodeCallback.connect(sigc::mem_fun(*this, &mainWindow::textPromptSignal));
     ctrlSpcView.promptModeOn();
     ctrlSpcView.useCustomTree(tree);
-    entry->grab_focus_without_selecting();
+    entry->grab_focus();
+    sourceCode.set_editable(false);
 }
 
 bool mainWindow::textPromptSignal(guint keyval, guint keycode, Gdk::ModifierType state) {
@@ -77,10 +78,10 @@ bool mainWindow::textPromptSignal(guint keyval, guint keycode, Gdk::ModifierType
     DLOG("This is my job!");
     sigc::signal<void(Glib::ustring)> sig;
     auto                              functor = reinterpret_cast<sigc::slot<void(Glib::ustring)> *>(this->userCallslot);
-    sig.connect(*functor);
-    auto        widgets = ctrlSpcView.giveCustomTree();
-    Gtk::Entry *entry = dynamic_cast<Gtk::Entry *>(widgets[1]);
+    auto                              widgets = ctrlSpcView.giveCustomTree();
+    Gtk::Entry *                      entry = dynamic_cast<Gtk::Entry *>(widgets[1]);
     DLOG("Got %s from buffer", entry->get_buffer()->get_text().c_str());
+    sig.connect(*functor);
     sig.emit(entry->get_buffer()->get_text());
 
     cleanupPostSignal();
@@ -92,11 +93,14 @@ void mainWindow::promptYesNo(Glib::ustring prompt, bool defaultOption, sigc::slo
     DLOG("\"%s\" ::: Prompting YES/NO with default '%c'", prompt.c_str(), defaultOption ? 'y' : 'n');
     Glib::RefPtr<Gtk::Label>               label(new Gtk::Label(prompt.append(defaultOption ? " (Y/n)" : " (y/N)")));
     std::vector<Glib::RefPtr<Gtk::Widget>> tree({label});
+    ctrlSpc.set_visible(true);
 
     this->userCallslot = reinterpret_cast<void *>(callback);
     this->pmodeCallback.connect(sigc::mem_fun(*this, &mainWindow::promptYesNoSignal));
     ctrlSpcView.promptModeOn();
     ctrlSpcView.useCustomTree(tree);
+    label->grab_focus();
+    sourceCode.set_editable(false);
 }
 
 bool mainWindow::promptYesNoSignal(guint keyval, guint keycode, Gdk::ModifierType state) {

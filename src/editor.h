@@ -30,6 +30,7 @@ class mainWindow : public Gtk::Window {
     void focusTextEditor() {
         ctrlSpc.set_visible(false);
         sourceCode.grab_focus();
+        sourceCode.set_editable();
     }
 
     void updateLineNumbers(); // update textview sourceLines with new line numbers
@@ -63,6 +64,15 @@ class mainWindow : public Gtk::Window {
     bool popAction(); // do next action, returns false when there are no actions
 
     protected:
+    void queueON() {
+        DLOG("queueON()!");
+        queueActive = true;
+    }
+    void queueOFF() {
+        DLOG("queueOFF()!");
+        queueActive = false;
+    }
+
     bool textPromptSignal(guint, guint, Gdk::ModifierType); // callback signal after user presses enter for textPrompt
     bool promptYesNoSignal(guint, guint, Gdk::ModifierType); // callback signal for promptYesNo
 
@@ -74,6 +84,7 @@ class mainWindow : public Gtk::Window {
     void* userCallslot; // user function to be typically run after the pmode callback is run
     sigc::signal<bool(guint, guint, Gdk::ModifierType)> pmodeCallback; // signal to trigger on activation of pmode
     std::queue<Glib::RefPtr<Action>>                    actionAbleQueue; // queue to do actions
+    bool                                                queueActive = false; // if this is on, then dont pop the queue
 };
 
 #endif // EDITOR_H

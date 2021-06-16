@@ -1,7 +1,5 @@
 #include "editor.h"
-#include "actions.h"
 #include "common.h"
-#include "text.h"
 #include <sstream>
 #include <string>
 
@@ -65,6 +63,8 @@ mainWindow::mainWindow() {
     buffers.setSlotReloadYN(sigc::mem_fun(*this, &mainWindow::promptYesNo));
     buffers.setSlotPopAction(sigc::mem_fun(*this, &mainWindow::popAction));
     buffers.setSlotPushAction(sigc::mem_fun(*this, &mainWindow::queueAction));
+    buffers.setSlotQueueOFF(sigc::mem_fun(*this,&mainWindow::queueOFF));
+    buffers.setSlotQueueON(sigc::mem_fun(*this,&mainWindow::queueON));
     buffers.append("new 1");
     buffers.setCurrentBuf(1);
 
@@ -85,7 +85,7 @@ mainWindow::mainWindow() {
         "fo",
         ACTION(OpenFile(&buffers, sigc::mem_fun(*this, &mainWindow::selfReturn)))
     );
-    
+   
     ctrlSpcView.add_action(
         NAME({"File", "Save"}),
         "fs",

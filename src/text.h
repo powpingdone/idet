@@ -40,6 +40,8 @@ class ppdTextBuffer {
     sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)>& reloadPromptSignal() { return reloadPrompt; }
     sigc::signal<void(Glib::RefPtr<Action>)>&                         pushSignal() { return push; }
     sigc::signal<bool()>&                                             popSignal() { return pop; }
+    sigc::signal<void()>&                                             queueONSignal() { return queueON; }
+    sigc::signal<void()>&                                             queueOFFSignal() { return queueOFF; }
     void selfDestructSlot(sigc::slot<void(size_t)> func) { selfDestruct = func; }
 
     // generic file functions
@@ -66,6 +68,8 @@ class ppdTextBuffer {
     sigc::signal<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadPrompt; // signal mainWindow::promptYesNo
     sigc::signal<void(Glib::RefPtr<Action>)>                         push; // signal mainWindow::queueAction()
     sigc::signal<bool()>                                             pop; // signal mainWindow::popAction()
+    sigc::signal<void()>                                             queueON; // signal mainWindow::queueON
+    sigc::signal<void()>                                             queueOFF; // signal mainWindow::queueOFF
     sigc::slot<void(size_t)>                                         selfDestruct;
     std::vector<Glib::RefPtr<Gio::File>>                             tmpFiles;
     Gio::FileMonitor::Event                                          tmpEvent;
@@ -92,6 +96,8 @@ class fileList {
     }
     void setSlotPopAction(sigc::slot<bool()> popFunc) { this->popFunc = popFunc; }
     void setSlotPushAction(sigc::slot<void(Glib::RefPtr<Action>)> pushFunc) { this->pushFunc = pushFunc; }
+    void setSlotQueueON(sigc::slot<void()> queueON) { queueONSlot = queueON; }
+    void setSlotQueueOFF(sigc::slot<void()> queueOFF) { queueOFFSlot = queueOFF; }
 
     size_t getCurrBufferID() const {
         for(auto x: buffers)
@@ -114,6 +120,8 @@ class fileList {
     sigc::signal<bool(size_t)>                              swBufferID; // signal to call mainWindow::swBufferByID
     sigc::slot<void(Glib::ustring, bool, sigc::slot<void(bool)>*)> reloadSlot; // slot to hold mainWindow::promptYesNo
     sigc::slot<bool()>                                             popFunc; // slot to hold mainWindow::popAction
+    sigc::slot<void()>                                             queueONSlot; // slot to mainWindow::queueON
+    sigc::slot<void()>                                             queueOFFSlot; // slot to mainWindow::queueOFF
     sigc::slot<void(Glib::RefPtr<Action>)>                         pushFunc; // slot to hold mainWindow::queueAction
 };
 
